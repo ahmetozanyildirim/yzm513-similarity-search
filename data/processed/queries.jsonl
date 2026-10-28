@@ -1,0 +1,200 @@
+{"query_id":0,"text":"Distributed Equivariant Graph Neural Networks for Large-Scale Electronic Structure Prediction","target_doc":6}
+{"query_id":1,"text":"COFFEE: COdesign Framework for Feature Enriched Embeddings in Ads-Ranking Systems","target_doc":22}
+{"query_id":2,"text":"RAPT: Model-Predictive Out-of-Distribution Detection and Failure Diagnosis for Sim-to-Real Humanoid Deployment","target_doc":28}
+{"query_id":3,"text":"Toward Robust Open-set Adaptation: Synapse Consolidation Inspired by Rac1\/MAPK Pathways","target_doc":32}
+{"query_id":4,"text":"Enhancing Next-Generation Language Models with Knowledge Graphs: Extending Claude, Mistral IA, and GPT-4 via KG-BERT","target_doc":34}
+{"query_id":5,"text":"A SUPERB-Style Benchmark of Self-Supervised Speech Models for Audio Deepfake Detection","target_doc":37}
+{"query_id":6,"text":"TRACE: A Metrologically-Grounded Engineering Framework for Trustworthy Agentic AI Systems in Operationally Critical Domains","target_doc":53}
+{"query_id":7,"text":"Evolving Skeletons: Motion Dynamics in Action Recognition","target_doc":55}
+{"query_id":8,"text":"A Comparative Analysis of Static Word Embeddings for Hungarian","target_doc":57}
+{"query_id":9,"text":"CosmoBench: A Multiscale, Multiview, Multitask Cosmology Benchmark for Geometric Deep Learning","target_doc":66}
+{"query_id":10,"text":"Many-vs-Many Missile Guidance via Virtual Targets","target_doc":69}
+{"query_id":11,"text":"Adopting a human developmental visual diet yields robust, shape-based AI vision","target_doc":71}
+{"query_id":12,"text":"Unemployment Dynamics Forecasting with Machine Learning Regression Models","target_doc":73}
+{"query_id":13,"text":"SuperRL: Reinforcement Learning with Supervision to Boost Language Model Reasoning","target_doc":76}
+{"query_id":14,"text":"The Reasoning Trap: An Information-Theoretic Bound on Closed-System Multi-Step LLM Reasoning","target_doc":84}
+{"query_id":15,"text":"Reasoning or Rationalization? The Role of Justifications in Masked Diffusion Models for Fact Verification","target_doc":86}
+{"query_id":16,"text":"Causal Front-Door Adjustment for Robust Jailbreak Attacks on LLMs","target_doc":87}
+{"query_id":17,"text":"IsoSci: A Benchmark of Isomorphic Cross-Domain Science Problems for Evaluating Reasoning versus Knowledge Retrieval in LLMs","target_doc":103}
+{"query_id":18,"text":"TIME: TabPFN-Integrated Multimodal Engine for Robust Tabular-Image Learning","target_doc":104}
+{"query_id":19,"text":"Coling-UniA at SciVQA 2025: Few-Shot Example Retrieval and Confidence-Informed Ensembling for Multimodal Large Language Models","target_doc":105}
+{"query_id":20,"text":"CompressKV: Semantic Retrieval Heads Know What Tokens are Not Important Before Generation","target_doc":113}
+{"query_id":21,"text":"Automated ARAT Scoring Using Multimodal Video Analysis, Multi-View Fusion, and Hierarchical Bayesian Models: A Clinician Study","target_doc":117}
+{"query_id":22,"text":"PsychiatryBench: A Multi-Task Benchmark for LLMs in Psychiatry","target_doc":120}
+{"query_id":23,"text":"Multi-Agent Collaborative Framework For Math Problem Generation","target_doc":125}
+{"query_id":24,"text":"DMF: A Deterministic Memory Framework for Conversational AI Agents","target_doc":128}
+{"query_id":25,"text":"When Models Know More Than They Say: Probing Analogical Reasoning in LLMs","target_doc":132}
+{"query_id":26,"text":"The Three Regimes of Offline-to-Online Reinforcement Learning","target_doc":138}
+{"query_id":27,"text":"taz2024full: Analysing German Newspapers for Gender Bias and Discrimination across Decades","target_doc":141}
+{"query_id":28,"text":"LLM as a Neural Architect: Controlled Generation of Image Captioning Models Under Strict API Contracts","target_doc":149}
+{"query_id":29,"text":"SHNU Multilingual Conversational Speech Recognition System for INTERSPEECH 2025 MLC-SLM Challenge","target_doc":150}
+{"query_id":30,"text":"Tide: A Customisable Dataset Generator for Anti-Money Laundering Research","target_doc":157}
+{"query_id":31,"text":"Enhancing knowledge tracing robustness for new question cold start in Intelligent Tutoring Systems","target_doc":161}
+{"query_id":32,"text":"Overlaying Governance: A Compositional Authorization Framework for Delegation and Scope in Agentic AI","target_doc":162}
+{"query_id":33,"text":"HyperCLOVA X 8B Omni","target_doc":164}
+{"query_id":34,"text":"Measuring Explainer Stability via Attribution Separability","target_doc":165}
+{"query_id":35,"text":"How does Watermarking Affect Visual Language Models in Document Understanding?","target_doc":180}
+{"query_id":36,"text":"Boundary-Constrained Diffusion Models for Floorplan Generation: Balancing Realism and Diversity","target_doc":189}
+{"query_id":37,"text":"Meta Learning-Driven Iterative Refinement for Robust Anomaly Detection in Industrial Inspection","target_doc":199}
+{"query_id":38,"text":"The Age of Sensorial Zero Trust: Why We Can No Longer Trust Our Senses","target_doc":202}
+{"query_id":39,"text":"New Bounds for Zarankiewicz Numbers via Reinforced LLM Evolutionary Search","target_doc":214}
+{"query_id":40,"text":"Flowchart2Mermaid: A Vision-Language Model Powered System for Converting Flowcharts into Editable Diagram Code","target_doc":221}
+{"query_id":41,"text":"Local Manifold Approximation and Projection for Manifold-Aware Diffusion Planning","target_doc":225}
+{"query_id":42,"text":"Anomaly Detection via Autoencoder Composite Features and NCE","target_doc":232}
+{"query_id":43,"text":"Embodiment-Aware Generalist Specialist Distillation for Unified Humanoid Whole-Body Control","target_doc":236}
+{"query_id":44,"text":"Transplanting, inverting, and preventing a misalignment persona: method-conditional emergent misalignment in Qwen2.5","target_doc":252}
+{"query_id":45,"text":"Interpretable graph-based models on multimodal biomedical data integration: A technical review and benchmarking","target_doc":258}
+{"query_id":46,"text":"OneDayAgent: Towards a Long-Horizon Harness for Autonomous Agents","target_doc":260}
+{"query_id":47,"text":"Evaluating Pretrained Music Embeddings for Cross-Performance Jazz Standard Recognition","target_doc":267}
+{"query_id":48,"text":"ESGenius: Benchmarking LLMs on Environmental, Social, and Governance (ESG) and Sustainability Knowledge","target_doc":277}
+{"query_id":49,"text":"What Does Loss Optimization Actually Teach, If Anything? Knowledge Dynamics in Continual Pre-training of LLMs","target_doc":280}
+{"query_id":50,"text":"MemReranker: Reasoning-Aware Reranking for Agent Memory Retrieval","target_doc":282}
+{"query_id":51,"text":"Recall with Reasoning: Chain-of-Thought Distillation for Mamba's Long-Context Memory and Extrapolation","target_doc":284}
+{"query_id":52,"text":"Measuring what Matters: Construct Validity in Large Language Model Benchmarks","target_doc":289}
+{"query_id":53,"text":"The \\textit{Questio de aqua et terra}: A Computational Authorship Verification Study","target_doc":298}
+{"query_id":54,"text":"Detecting high-frequency brain disorder signals using dynamic mode decomposition from EEG","target_doc":299}
+{"query_id":55,"text":"On Ambiguity: The case of fraction, its meanings and roles","target_doc":304}
+{"query_id":56,"text":"AURA: Intent-Directed Probing for Implicit-Need Surfacing in Situated LLM Agents","target_doc":310}
+{"query_id":57,"text":"Improving Retrospective Language Agents via Joint Policy Gradient Optimization","target_doc":316}
+{"query_id":58,"text":"SocraticPO: Policy Optimization via Interactive Guidance","target_doc":321}
+{"query_id":59,"text":"Making Prospective Memory SLM-Shaped: Typed Intention Stores for Small-Model Agents","target_doc":323}
+{"query_id":60,"text":"Geometric structures and deviations on James' symmetric positive-definite matrix bicone domain","target_doc":326}
+{"query_id":61,"text":"Advancing Trustworthy AI for Sustainable Development: Recommendations for Standardising AI Incident Reporting","target_doc":332}
+{"query_id":62,"text":"ExpGuard: LLM Content Moderation in Specialized Domains","target_doc":338}
+{"query_id":63,"text":"Optimal Boundary Control of Diffusion on Graphs via Linear Programming","target_doc":341}
+{"query_id":64,"text":"Predicting and improving test-time scaling laws via reward tail-guided search","target_doc":346}
+{"query_id":65,"text":"RP-OPSD: Reasoning-Pivot-Guided On-Policy Self-Distillation for Multilingual Reasoning Transfer","target_doc":348}
+{"query_id":66,"text":"In-Situ Tweedie Discrete Diffusion Models","target_doc":352}
+{"query_id":67,"text":"Deferred Exposure of Future Trajectories for Verifiable Reasoning in Autonomous Driving VLMs","target_doc":355}
+{"query_id":68,"text":"Knowledge-Augmented Question Error Correction for Chinese Question Answer System with QuestionRAG","target_doc":359}
+{"query_id":69,"text":"ArabEmoNet: A Lightweight Hybrid 2D CNN-BiLSTM Model with Attention for Robust Arabic Speech Emotion Recognition","target_doc":368}
+{"query_id":70,"text":"World Models for Autonomous Navigation of Terrestrial Robots from LIDAR Observations","target_doc":369}
+{"query_id":71,"text":"Secure and reversible face anonymization with diffusion models","target_doc":374}
+{"query_id":72,"text":"Make a Video Call with LLM: A Measurement Campaign over Six Mainstream Apps","target_doc":376}
+{"query_id":73,"text":"WavCube: Unifying Speech Representation for Understanding and Generation via Semantic-Acoustic Joint Modeling","target_doc":377}
+{"query_id":74,"text":"Policy and World Modeling Co-Training for Language Agents","target_doc":385}
+{"query_id":75,"text":"Beyond LLM-as-a-Judge: Deterministic Metrics for Multilingual Generative Text Evaluation","target_doc":387}
+{"query_id":76,"text":"The Rise of Verbal Reinforcement Learning","target_doc":391}
+{"query_id":77,"text":"Over-representation of phonological features in basic vocabulary doesn't replicate when controlling for spatial and phylogenetic effects","target_doc":394}
+{"query_id":78,"text":"Physics-Embedded Neural ODEs for Sim2Real Edge Digital Twins of Hybrid Power Electronics Systems","target_doc":398}
+{"query_id":79,"text":"Memory-Orchestrated Semantic System (MOSS): An Auditable Agentic Memory Architecture","target_doc":403}
+{"query_id":80,"text":"Bridging Generalization Gap of Heterogeneous Federated Clients Using Generative Models","target_doc":404}
+{"query_id":81,"text":"GUI-AIMA: Aligning Intrinsic Multimodal Attention with a Context Anchor for GUI Grounding","target_doc":408}
+{"query_id":82,"text":"QSTN: A Modular Framework for Robust Questionnaire Inference with Large Language Models","target_doc":410}
+{"query_id":83,"text":"A Theory of Machine Understanding via the Minimum Description Length Principle","target_doc":414}
+{"query_id":84,"text":"MAP-Diff: Multi-Anchor Guided Diffusion for Progressive 3D Whole-Body Low-Dose PET Denoising","target_doc":416}
+{"query_id":85,"text":"Adaptive Equilibrium: Dynamic Weighting Framework for Generalized Interruption of DeepFake Models","target_doc":419}
+{"query_id":86,"text":"Knowledge Graph Completion with Mixed Geometry Tensor Factorization","target_doc":425}
+{"query_id":87,"text":"EIM-TRNG: Obfuscating Deep Neural Network Weights with Encoding-in-Memory True Random Number Generator via RowHammer","target_doc":426}
+{"query_id":88,"text":"Nonlinear energy-preserving model reduction with lifting transformations that quadratize the energy","target_doc":428}
+{"query_id":89,"text":"Toward a foundational thermal model for residential buildings","target_doc":435}
+{"query_id":90,"text":"THaLLE-ThaiLLM: Domain-Specialized Small LLMs for Finance and Thai -- Technical Report","target_doc":439}
+{"query_id":91,"text":"Homomorphism Expressivity of Spectral Invariant Graph Neural Networks","target_doc":450}
+{"query_id":92,"text":"Risk-Constrained Freshness-Aware Semantic Caching for Open-Web Retrieval-Augmented LLMs","target_doc":452}
+{"query_id":93,"text":"The brain-AI convergence: Predictive and generative world models for general-purpose computation","target_doc":462}
+{"query_id":94,"text":"Understanding Learning Dynamics Through Structured Representations","target_doc":468}
+{"query_id":95,"text":"SonicCaps: Large-Scale Diverse and Fine-Grained Captioning for Improved Audio-Retrieval","target_doc":484}
+{"query_id":96,"text":"Milmer: a Framework for Multiple Instance Learning based Multimodal Emotion Recognition","target_doc":488}
+{"query_id":97,"text":"Deep Sylvester Posterior Inference for Adaptive Compressed Sensing in Ultrasound Imaging","target_doc":491}
+{"query_id":98,"text":"Linear Fusion MultiDiffusion for Fast Training-Free Spherical Panorama Generation","target_doc":496}
+{"query_id":99,"text":"SemEval-2026 Task 7: Everyday Knowledge Across Diverse Languages and Cultures","target_doc":507}
+{"query_id":100,"text":"StructCoh: Structured Contrastive Learning for Context-Aware Text Semantic Matching","target_doc":515}
+{"query_id":101,"text":"Where Do Backdoors Live? A Component-Level Analysis of Backdoor Propagation in Speech Language Models","target_doc":520}
+{"query_id":102,"text":"Natural Language Processing: A Comprehensive Practical Guide from Tokenisation to RLHF","target_doc":522}
+{"query_id":103,"text":"Robust Linear Dueling Bandits with Post-serving Context under Unknown Delays and Adversarial Corruptions","target_doc":523}
+{"query_id":104,"text":"Multilingual Attribute Extraction from News Web Pages","target_doc":525}
+{"query_id":105,"text":"Act Only When It Pays: Efficient Reinforcement Learning for LLM Reasoning via Selective Rollouts","target_doc":526}
+{"query_id":106,"text":"How and why does deep ensemble coupled with transfer learning increase performance in bipolar disorder and schizophrenia classification?","target_doc":530}
+{"query_id":107,"text":"Finish First, Perfect Later: Test-Time Token-Level Cross-Validation for Diffusion Large Language Models","target_doc":531}
+{"query_id":108,"text":"Improving Latent Generalization Using Test-time Compute","target_doc":533}
+{"query_id":109,"text":"Stable Language Guidance for Vision-Language-Action Models","target_doc":557}
+{"query_id":110,"text":"Post-processing for Fair Regression via Explainable SVD","target_doc":563}
+{"query_id":111,"text":"Optimizing Prompts for Large Language Models: A Causal Approach","target_doc":564}
+{"query_id":112,"text":"ROBUST-WT: Robust Uncertainty-aware Segmentation Transform via Whitening and Training Enhancements","target_doc":572}
+{"query_id":113,"text":"Lessons for GenAI Literacy From a Field Study of Human-GenAI Augmentation in the Workplace","target_doc":575}
+{"query_id":114,"text":"PGMem: Tightly Coupled Persona-Memory Graph for Lifelong Personalized Agents","target_doc":584}
+{"query_id":115,"text":"OceanAI: A Conversational Platform for Accurate, Transparent, Near-Real-Time Oceanographic Insights","target_doc":587}
+{"query_id":116,"text":"HiMeS: Hippocampus-inspired Memory System for Personalized AI Assistants","target_doc":589}
+{"query_id":117,"text":"Hopscotch: Discovering and Skipping Redundancies in Language Models","target_doc":590}
+{"query_id":118,"text":"Adaptive Bidirectional Task Interaction for Joint Segmentation and Classification of Breast Ultrasound","target_doc":598}
+{"query_id":119,"text":"Dual-Process Image Generation","target_doc":600}
+{"query_id":120,"text":"Malliavin Calculus for Counterfactual Gradient Estimation in Adaptive Inverse Reinforcement Learning","target_doc":602}
+{"query_id":121,"text":"Textualize Visual Prompt for Image Editing via Diffusion Bridge","target_doc":603}
+{"query_id":122,"text":"Personalized Image Generation from an Author Writing Style","target_doc":604}
+{"query_id":123,"text":"Chest X-ray Pneumothorax Segmentation Using EfficientNet-B4 Transfer Learning in a U-Net Architecture","target_doc":612}
+{"query_id":124,"text":"RTQA : Recursive Thinking for Complex Temporal Knowledge Graph Question Answering with Large Language Models","target_doc":616}
+{"query_id":125,"text":"Less-to-More Generalization: Unlocking More Controllability by In-Context Generation","target_doc":619}
+{"query_id":126,"text":"Beyond Non-Expert Demonstrations: Outcome-Driven Action Constraint for Offline Reinforcement Learning","target_doc":620}
+{"query_id":127,"text":"Random-key genetic algorithms: Principles and applications","target_doc":625}
+{"query_id":128,"text":"When RAG Chatbots Expose Their Backend: An Anonymized Case Study of Privacy and Security Risks in Patient-Facing Medical AI","target_doc":632}
+{"query_id":129,"text":"The DCR Delusion: Measuring the Privacy Risk of Synthetic Data","target_doc":638}
+{"query_id":130,"text":"Online Nonsubmodular Optimization with Delayed Feedback in the Bandit Setting","target_doc":639}
+{"query_id":131,"text":"Hidden in Plain Sight: Where Developers Confess Self-Admitted Technical Debt","target_doc":641}
+{"query_id":132,"text":"Towards Automated Differential Diagnosis of Skin Diseases Using Deep Learning and Imbalance-Aware Strategies","target_doc":644}
+{"query_id":133,"text":"Care-Conditioned Neuromodulation for Autonomy-Preserving Supportive Dialogue Agents","target_doc":646}
+{"query_id":134,"text":"Never too Prim to Swim: An LLM-Enhanced RL-based Adaptive S-Surface Controller for AUVs under Extreme Sea Conditions","target_doc":661}
+{"query_id":135,"text":"CFIRE: A General Method for Combining Local Explanations","target_doc":677}
+{"query_id":136,"text":"The Fairness Collapse Phenomenon: Bias Amplification in Language Models Trained on Synthetic Data","target_doc":679}
+{"query_id":137,"text":"Can Large Language Models Keep Up? Benchmarking Online Adaptation to Continual Knowledge Streams","target_doc":681}
+{"query_id":138,"text":"Part Grounding, Not Action Knowledge: Locating the Bottleneck in VLM Affordance Prediction","target_doc":682}
+{"query_id":139,"text":"Smart Transportation Without Neurons -- Fair Metro Network Expansion with Tabular Reinforcement Learning","target_doc":685}
+{"query_id":140,"text":"Neuron-Aware Data Selection for Annotation-Free LLM Self-Distillation","target_doc":687}
+{"query_id":141,"text":"Open-Domain Safety Policy Construction","target_doc":692}
+{"query_id":142,"text":"Neighbor-Sampling Based Momentum Stochastic Methods for Training Graph Neural Networks","target_doc":693}
+{"query_id":143,"text":"Physics-informed post-processing of stabilized finite element solutions for transient convection-dominated problems","target_doc":700}
+{"query_id":144,"text":"Visual Large Language Models for Generalized and Specialized Applications","target_doc":703}
+{"query_id":145,"text":"Concerns and Strategic Responses of Older Workers Navigating Generative AI in Bridge Employment","target_doc":707}
+{"query_id":146,"text":"Adaptive Reconstruction of Bosonic Quantum States","target_doc":709}
+{"query_id":147,"text":"On the Role of Reasoning Patterns in the Generalization Discrepancy of Long Chain-of-Thought Supervised Fine-Tuning","target_doc":712}
+{"query_id":148,"text":"SNR-Adaptive Unified Diffusion for Multi-Task Medical Image Segmentation","target_doc":717}
+{"query_id":149,"text":"AFFormer: Adaptive Feature Fusion Transformer for V2X Cooperative Perception under Channel Impairments","target_doc":718}
+{"query_id":150,"text":"A Decade of Action Quality Assessment: Largest Systematic Survey of Trends, Challenges, and Future Directions","target_doc":721}
+{"query_id":151,"text":"Towards Ethical Multi-Agent Systems of Large Language Models: A Mechanistic Interpretability Perspective","target_doc":726}
+{"query_id":152,"text":"Reduced-Order Models: The Mother of World Models","target_doc":736}
+{"query_id":153,"text":"ADVENT: LLM-Driven Automatic Predicate Invention for ILP","target_doc":740}
+{"query_id":154,"text":"Text-Printed Image: Bridging the Image-Text Modality Gap for Text-centric Training of Large Vision-Language Models","target_doc":741}
+{"query_id":155,"text":"DRAGOn: Designing RAG On Periodically Updated Corpus","target_doc":743}
+{"query_id":156,"text":"ReflexiCoder: Teaching Large Language Models to Self-Reflect on Generated Code and Self-Correct It via Reinforcement Learning","target_doc":750}
+{"query_id":157,"text":"When Memory Lies: An Empirical Study of Spatial Memory Staleness in VLM Agents","target_doc":751}
+{"query_id":158,"text":"Adversarial Generative Flow Network for Solving Vehicle Routing Problems","target_doc":752}
+{"query_id":159,"text":"Federated nnU-Net for Privacy-Preserving Medical Image Segmentation","target_doc":757}
+{"query_id":160,"text":"Sparse FEONet: A Low-Cost, Memory-Efficient Operator Network via Finite-Element Local Sparsity for Parametric PDEs","target_doc":763}
+{"query_id":161,"text":"DeepResearcher: Scaling Deep Research via Reinforcement Learning in Real-world Environments","target_doc":779}
+{"query_id":162,"text":"Optimizing Retrieval-Augmented Generation: Analysis of Hyperparameter Impact on Performance and Efficiency","target_doc":785}
+{"query_id":163,"text":"Joint Learning of Hierarchical Neural Options and Abstract World Model","target_doc":786}
+{"query_id":164,"text":"Shift-Invariant Attribute Scoring for Kolmogorov-Arnold Networks via Shapley Value","target_doc":790}
+{"query_id":165,"text":"Flow-Transformed Implicit Processes for Function-Space Variational Inference","target_doc":792}
+{"query_id":166,"text":"Training Long-Context, Multi-Turn Software Engineering Agents with Reinforcement Learning","target_doc":794}
+{"query_id":167,"text":"A Privacy-Preserving Indoor Localization System based on Hierarchical Federated Learning","target_doc":803}
+{"query_id":168,"text":"Enhancing the Robustness of Contextual ASR to Varying Biasing Information Volumes Through Purified Semantic Correlation Joint Modeling","target_doc":807}
+{"query_id":169,"text":"Message Tuning Outshines Graph Prompt Tuning: A Prismatic Space Perspective","target_doc":813}
+{"query_id":170,"text":"Online Continual Graph Learning","target_doc":821}
+{"query_id":171,"text":"Exploring specialization and sensitivity of convolutional neural networks in the context of simultaneous image augmentations","target_doc":828}
+{"query_id":172,"text":"R3D: Quantitative 3D Spatial Reasoning for Egocentric Wearables","target_doc":832}
+{"query_id":173,"text":"Lost in Latent Space: An Empirical Study of Latent Diffusion Models for Physics Emulation","target_doc":835}
+{"query_id":174,"text":"Self-Evaluating LLMs for Multi-Step Tasks: Stepwise Confidence Estimation for Failure Detection","target_doc":858}
+{"query_id":175,"text":"Diagnosing Bottlenecks in Data Visualization Understanding by Vision-Language Models","target_doc":861}
+{"query_id":176,"text":"GRAIL: Graph Edit Distance and Node Alignment Using LLM-Generated Code","target_doc":870}
+{"query_id":177,"text":"A Comprehensive Framework for Long-Term Resiliency Investment Planning under Extreme Weather Uncertainty for Electric Utilities","target_doc":871}
+{"query_id":178,"text":"SWinMamba: Serpentine Window State Space Model for Vascular Segmentation","target_doc":874}
+{"query_id":179,"text":"Listwise Preference Alignment Optimization for Tail Item Recommendation","target_doc":881}
+{"query_id":180,"text":"DFKI-Speech System for WildSpoof Challenge: A robust framework for SASV In-the-Wild","target_doc":885}
+{"query_id":181,"text":"Overview of the EReL@MIR 2025 Multimodal Document Retrieval Challenge (Track 1)","target_doc":909}
+{"query_id":182,"text":"Optimizing Electric Vehicle Charging Station Placement Using Reinforcement Learning and Agent-Based Simulations","target_doc":911}
+{"query_id":183,"text":"FSKD: Monocular Forest Structure Inference via LiDAR-to-RGBI Knowledge Distillation","target_doc":913}
+{"query_id":184,"text":"Mind the Gap: Zero-Query Jailbreaks via Filter-Generator Discrepancy in Text-to-Image Systems","target_doc":914}
+{"query_id":185,"text":"An Algorithm for Fixed Budget Best Arm Identification with Combinatorial Exploration","target_doc":920}
+{"query_id":186,"text":"On the Utility and Factual Reliability of Pruned Mixture-of-Experts Models in the Biomedical Domain","target_doc":924}
+{"query_id":187,"text":"Leveraging Data Symmetries to Select an Optimal Subset of Training Data under Label Noise","target_doc":929}
+{"query_id":188,"text":"DLLG: Dynamic Logit-Level Gating of LLM Experts","target_doc":938}
+{"query_id":189,"text":"Internalizing LLM Reasoning via Discovery and Replay of Latent Actions","target_doc":939}
+{"query_id":190,"text":"ESA: Energy-Based Shot Assembly Optimization for Automatic Video Editing","target_doc":943}
+{"query_id":191,"text":"Efficient Privacy-Preserving Recommendation on Sparse Data using Fully Homomorphic Encryption","target_doc":954}
+{"query_id":192,"text":"Calibrating Overconfidence Without Sacrificing Confidence: Probe-Conditioned Head Intervention for LLMs","target_doc":957}
+{"query_id":193,"text":"A Directed Graph Model and Experimental Framework for Design and Study of Time-Dependent Text Visualisation","target_doc":960}
+{"query_id":194,"text":"Data Therapist: Eliciting Domain Knowledge from Subject Matter Experts Using Large Language Models","target_doc":961}
+{"query_id":195,"text":"Context-Adaptive Multi-Prompt Embedding with Large Language Models for Vision-Language Alignment","target_doc":966}
+{"query_id":196,"text":"Large-Scale Terminal Agentic Trajectory Generation from Dockerized Environments","target_doc":972}
+{"query_id":197,"text":"MARSAD: A Multi-Functional Tool for Real-Time Social Media Analysis","target_doc":980}
+{"query_id":198,"text":"Fourier-Modulated Implicit Neural Representation for Multispectral Satellite Image Compression","target_doc":984}
+{"query_id":199,"text":"Aggressive Compression Enables LLM Weight Theft","target_doc":995}

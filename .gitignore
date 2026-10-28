@@ -1,0 +1,13 @@
+# environment
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.ipynb_checkpoints/
+
+# large / regenerable data (rebuild with: python scripts/prepare_data.py)
+data/raw/*.jsonl
+data/processed/*.npy
+
+# Dask / Ray scratch
+dask-worker-space/

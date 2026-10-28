@@ -1,0 +1,39 @@
+# YZM 513 - Project 1: High-Performance Similarity Search Engine
+# Tested with Python 3.12 on Windows 11 (AMD Ryzen 7 9800X3D, 8C/16T, 32 GB RAM).
+#
+#   python -m venv .venv            (or: uv venv .venv --python 3.12)
+#   .venv\Scripts\activate          (Linux/macOS/Colab: source .venv/bin/activate)
+#   pip install -r requirements.txt
+#   pip install -e .                (makes `import hpss` work in notebooks + worker processes)
+
+# Core scientific stack
+numpy>=2.0
+scipy>=1.13
+scikit-learn>=1.5
+pandas>=2.2
+matplotlib>=3.9
+threadpoolctl>=3.5          # control BLAS thread count (Phase 3)
+psutil>=6.0                 # CPU / memory info
+
+# Dataset + embeddings (embedding time is NOT benchmarked)
+sentence-transformers>=3.0  # pulls in torch (CPU build is enough)
+tqdm>=4.66
+
+# Phase 1: profiling
+line_profiler>=4.1
+py-spy>=0.3.14              # flame graphs (optional, run from terminal)
+
+# Phase 2: JIT compilation
+numba>=0.60
+
+# Phase 3: parallelism & distributed
+dask[array,distributed]>=2024.8
+ray>=2.40
+
+# Bonus: approximate nearest neighbours (HNSW)
+faiss-cpu>=1.8
+
+# Notebooks
+jupyterlab>=4.2
+ipykernel>=6.29
+ipywidgets>=8.1
