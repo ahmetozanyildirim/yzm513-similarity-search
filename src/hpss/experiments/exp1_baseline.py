@@ -83,7 +83,7 @@ def run_cprofile(corpus_list, query_list, n_queries=5, n_docs=5_000):
     pr.runcall(naive.search_naive, query_list[:n_queries], corpus_list[:n_docs], K)
     t_prof = time.perf_counter() - t0
     t_plain = bench.benchmark(naive.search_naive, query_list[:n_queries], corpus_list[:n_docs], K,
-                              warmup=0, runs=1)["median"]
+                              warmup=1, runs=5)["median"]
     out_dir = config.stage_dir(STAGE)
     pr.dump_stats(out_dir / "cprofile.prof")
     buf = io.StringIO()
@@ -119,6 +119,46 @@ def run_line_profiler(corpus_list, query_list, n_queries=2, n_docs=2_000):
     cos = lines[lines.function == "cosine_similarity_python"].sort_values("pct_of_function", ascending=False)
     srch = lines[lines.function == "search_naive"].sort_values("pct_of_function", ascending=False)
     return cos, srch, buf.getvalue()
+
+
+def run_pyspy(rate=200):
+    """Sampling profiler: flame graph of scripts/profile_naive.py (5 queries x 5,000 docs).
+
+    --subprocesses is needed on Windows: the venv's python.exe is a launcher that starts
+    the real interpreter as a child process. Returns the SVG path, or None if py-spy is unavailable.
+    """
+    import shutil
+    import subprocess
+    exe = shutil.which("py-spy") or str(Path(sys.executable).with_name("py-spy.exe"))
+    out = config.stage_dir(STAGE) / "flamegraph.svg"
+    try:
+        subprocess.run([exe, "record", "--subprocesses", "--rate", str(rate), "--format", "flamegraph",
+                        "-o", str(out), "--", sys.executable, str(config.ROOT / "scripts" / "profile_naive.py")],
+                       check=True, capture_output=True, text=True, timeout=300)
+    except (OSError, subprocess.SubprocessError) as e:
+        print("py-spy could not run:", repr(e)[:200])
+        return None
+    return out
+
+
+def reprofile_after_fix(corpus_list, query_list, n_queries=2, n_docs=2_000):
+    """'Profile first. Fix the top bottleneck. Re-profile.' (week 1): line profile of the version with
+    norms computed once - what is the next bottleneck?"""
+    from line_profiler import LineProfiler
+    normed = naive.normalize_python(corpus_list[:n_docs])
+    lp = LineProfiler(naive.search_python_prenorm)
+    lp.runcall(naive.search_python_prenorm, query_list[:n_queries], normed, K)
+    stats = lp.get_stats()
+    rows = []
+    for (fname, _, func), entries in stats.timings.items():
+        tot = sum(t for _, _, t in entries)
+        for lineno, hits, t in entries:
+            rows.append({"line": lineno, "hits": hits, "pct_of_function": 100 * t / tot,
+                         "code": linecache.getline(fname, lineno).strip()})
+    df = pd.DataFrame(rows).sort_values("pct_of_function", ascending=False).reset_index(drop=True)
+    bench.save_csv(df, "line_profiler_after_fix", STAGE)
+    bench.update_summary(STAGE, reprofile_top_lines=df.head(3)[["code", "pct_of_function"]].to_dict("records"))
+    return df
 
 
 def plot_profiling(prof, cos_lines):
@@ -230,8 +270,10 @@ def main():
     prof, _, _, _ = run_cprofile(corpus_list, query_list)
     cos_lines, _, _ = run_line_profiler(corpus_list, query_list)
     plot_profiling(prof, cos_lines)
+    print("flame graph:", run_pyspy())
     fixes = python_fixes(corpus_list, query_list, X, Q)
     print(fixes)
+    print(reprofile_after_fix(corpus_list, query_list).head(5))
     print(memory_layout(corpus_list, X))
     store = compute_reference(X, query_list)
     print("reference == sequential naive:", check_reference(store, corpus_list, query_list))

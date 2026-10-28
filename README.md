@@ -69,6 +69,10 @@ python scripts/demo.py --compare-naive "speculative decoding for LLM inference"
 
 Phases must run in this order: later phases verify their results against the naive-baseline reference written in phase 1.
 
+**Optional - free-threaded Python (phase 3, GIL experiment):** the same pure-Python thread test is also run on a free-threaded
+CPython 3.14t (PEP 703). Install it with `uv python install 3.14t` (or point `HPSS_FT_PYTHON` at any `python3.14t`); the script
+`scripts/gil_free_threading.py` uses only the standard library. Without it, that part prints a note and is skipped.
+
 **Google Colab:** upload this folder, then `!pip install -r requirements.txt && pip install -e .` in the first cell. Colab has
 2 cores, so the parallel phases scale less; `results/4_final_system/scaling_<host>.csv` enables the laptop-vs-Colab comparison.
 

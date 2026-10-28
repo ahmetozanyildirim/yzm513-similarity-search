@@ -46,6 +46,7 @@ MIN_WORDS = 50                       # spec: average length >= 50 tokens
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"   # 768-d
 EMBED_DIM = 768
+EMBED_SECONDS = 2199                 # measured once: 20,000 abstracts on this CPU (stage 0) -> ~9 docs/s
 
 # ---- experiments ---------------------------------------------------------
 SEED = 42

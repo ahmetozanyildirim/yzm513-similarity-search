@@ -53,6 +53,10 @@ python scripts/demo.py --compare-naive "speculative decoding for LLM inference"
 Faz sırası önemli: sonraki fazlar sonuçlarını Faz 1'in yazdığı naif baseline referansıyla doğruluyor. Her fazın komutu ve çıktı
 klasörü [README.md](README.md#reproduce) tablosunda.
 
+**İsteğe bağlı - GIL'siz Python (Faz 3, GIL deneyi):** aynı saf Python thread testi GIL'siz CPython 3.14t (PEP 703) ile de çalıştırılıyor.
+Kurulum: `uv python install 3.14t` (ya da `HPSS_FT_PYTHON` değişkenini herhangi bir `python3.14t`'ye yönlendirin); `scripts/gil_free_threading.py`
+sadece standart kütüphaneyi kullanıyor. Kurulu değilse o kısım bir not yazıp atlanıyor.
+
 ## Ölçüm yöntemi
 
 * Her ölçüm: warm-up (JIT derlenen her şey için 3) + **en az 5 ölçüm**; **medyan** raporlanıyor (ortalama, std ve ham süreler `results/` içinde).

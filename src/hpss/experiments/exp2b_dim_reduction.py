@@ -1,5 +1,7 @@
 """Stage 2B (Phase 2B) - dimensionality reduction: our power-iteration SVD vs. library methods (section 3.2)."""
 
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -202,6 +204,32 @@ def finalize(t_k, full, errs, rec, red, k_cross):
     return cap
 
 
+def dask_svd_compressed(X, S_np, k=128, chunk_rows=5_000):
+    """Week 5 extra (04_dask_array_embeddings.py): Dask's chunked randomized SVD vs sklearn's TruncatedSVD.
+    Both use 5 power iterations; the error is compared with the Eckart-Young optimum."""
+    import dask.array as da
+    rows = []
+    r = bench.benchmark(svd.reduce, X, k, "truncated_svd", warmup=1, runs=5)
+    rows.append({"method": "sklearn TruncatedSVD (in memory)", "seconds": r["median"],
+                 "relative_error": svd.reconstruction_error(X, r["result"])[1]})
+    X_da = da.from_array(X, chunks=(chunk_rows, X.shape[1]))
+
+    def dask_svd():
+        u, s, v = da.linalg.svd_compressed(X_da, k, n_power_iter=5, seed=0, compute=True)
+        return da.compute(u, s, v)
+
+    r = bench.benchmark(dask_svd, warmup=1, runs=5)
+    u, s, v = r["result"]
+    rows.append({"method": f"dask svd_compressed ({len(X) // chunk_rows} chunks of {chunk_rows:,} rows)",
+                 "seconds": r["median"],
+                 "relative_error": svd.reconstruction_error(X, {"Z": u * s, "components": v, "mean": None})[1]})
+    rows.append({"method": "optimal (Eckart-Young)", "seconds": np.nan,
+                 "relative_error": svd.optimal_error(S_np, k, float(np.linalg.norm(X)))[1]})
+    df = pd.DataFrame(rows)
+    bench.save_csv(df, "dask_svd_compressed", STAGE)
+    return df
+
+
 def main():
     P.setup_style()
     X, Qn = load()
@@ -213,6 +241,7 @@ def main():
     t_m = time_vs_m(X)
     errs = errors_and_memory(X, S_np)
     print(mean_direction(X, S_np, Vt_np))
+    print(dask_svd_compressed(X, S_np))
     rec, exact_idx = search_quality(X, Qn)
     red = reducer_for_search(X, Qn, exact_idx)
     print(red)

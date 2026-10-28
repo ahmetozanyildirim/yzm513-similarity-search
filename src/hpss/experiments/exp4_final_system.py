@@ -1,7 +1,9 @@
 """Stage 4 (Phase 4) - final system: candidate count, stage profile, thread-pool contention,
-correctness, scaling curve, all-versions comparison and the live demo (report section 6)."""
+correctness (+ float32 precision), scaling curve (+ p95 latency), all-versions comparison, the week-5
+scale walls at 100M documents, the five questions, and the live demo (report section 6)."""
 
 import json
+import math
 import os
 import platform
 import subprocess
@@ -202,7 +204,8 @@ def scaling(X, Q, final_kw):
             rb = bench.benchmark(eng.search, Q, K, warmup=3, runs=10)
             lat = [bench.benchmark(eng.search, Q[i:i + 1], K, warmup=1, runs=5)["median"] for i in range(0, 200, 4)]
             rows.append({"n_docs": n, "kind": kind, "version": name, "batch_s": rb["median"], "batch_std_s": rb["std"],
-                         "latency_s": float(np.median(lat)), "index_mb": eng.memory_mb()})
+                         "latency_s": float(np.median(lat)), "latency_p95_s": float(np.percentile(lat, 95)),
+                         "index_mb": eng.memory_mb()})
         rn = bench.benchmark(search_numba_fused, Qn32, engines["exact_blas"].X, K, warmup=3, runs=10)
         rows.append({"n_docs": n, "kind": kind, "version": "numba_fused", "batch_s": rn["median"],
                      "batch_std_s": rn["std"], "latency_s": np.nan, "index_mb": engines["exact_blas"].memory_mb()})
@@ -287,8 +290,9 @@ def all_versions(scal, final_name):
     rows = [("Naive Python (baseline)", "python", b1["baseline"]["full_workload_s_estimate"]),
             ("Python: norms once", "python", fixes["fix 2: norms once"] * scale),
             ("Python: sum(map) + heapq", "python", fixes["fix 1+3: sum(map) + heapq"] * scale)]
+    skip = ("asyncio", "fail", "ray.wait", "memmap")         # not separate versions of the search (variants / demos)
     for r in s3["summary"]:
-        if "asyncio" not in r["strategy"]:
+        if not any(w in r["strategy"] for w in skip):
             rows.append((r["strategy"].replace(" (1 BLAS thread/worker)", "").replace("Phase-2 best: ", ""),
                          r["key"], r["median_s"]))
     rows += [("Exact 768-d + parallel top-k", "numba", s["exact_ptopk"]), (f"Final: {final_name}", "final", s["final"])]
@@ -309,6 +313,110 @@ def plot_all_versions(df):
     ax.set_xlim(right=df.seconds.max() * 1e3 * 60)
     P.savefig(fig, "fig7_all_versions", STAGE)
     return fig
+
+
+# ---------------------------------------------------------------- float32 precision
+def float32_precision(corr):
+    """Why 1e-5 is a fair tolerance for float32: rounding error of a 768-term dot product vs what we measured."""
+    eps = float(np.finfo(np.float32).eps)
+    d = config.EMBED_DIM
+    worst = corr.groupby("version").max_abs_score_diff.max()
+    rows = [{"quantity": "float32 machine epsilon", "value": eps},
+            {"quantity": f"typical error of a {d}-term dot product (sqrt(d) x eps)", "value": math.sqrt(d) * eps},
+            {"quantity": f"worst-case bound (d x eps)", "value": d * eps},
+            {"quantity": "tolerance used (spec)", "value": config.TOL}]
+    rows += [{"quantity": f"measured max |score - baseline|: {v}", "value": float(x)} for v, x in worst.items()]
+    df = pd.DataFrame(rows)
+    bench.save_csv(df, "float32_precision", STAGE)
+    return df
+
+
+# ---------------------------------------------------------------- week 5: the scale walls at 100M documents
+def scan_bandwidth_gbps(rows=200_000, dim=config.EMBED_DIM, repeats=5):
+    """Effective GB/s of a float32 matrix @ vector (week 5, 19_scale_estimate.py) - 200K rows = 614 MB, so
+    it streams from DRAM, not from the cache."""
+    rng = np.random.default_rng(0)
+    X = rng.standard_normal((rows, dim), dtype=np.float32)
+    q = rng.standard_normal(dim, dtype=np.float32)
+    X @ q
+    best = min(bench.benchmark(lambda: X @ q, warmup=0, runs=1)["median"] for _ in range(repeats))
+    return X.nbytes / best / 1e9
+
+
+def scale_walls(k_dims=128, workers_list=(1, 8, 32, 128), mtbf_days=1000, f_ser=0.02, docs_per_s_assumed=1000):
+    """The four tables of the week-5 back-of-envelope (19_scale_estimate.py). MEASURED here: scan bandwidth,
+    RAM, our encoder's docs/s (stage 0, CPU). ASSUMED as on the slides: serial fraction f of the encoding job,
+    1000 docs/s for a GPU worker, machine MTBF."""
+    import psutil
+    gbps = scan_bandwidth_gbps()
+    ram = psutil.virtual_memory().total
+    docs_per_s = config.N_CORPUS / config.EMBED_SECONDS
+    out = {}
+
+    rows = []                                                         # 1) memory wall
+    for n in (20_000, 1_000_000, 10_000_000, 100_000_000):
+        for d in (config.EMBED_DIM, k_dims):
+            size = n * d * 4
+            rows.append({"docs": n, "dims": d, "matrix_gb": size / 1e9, "x_this_ram": size / ram,
+                         "fits_in_ram": size <= ram, "one_scan_s": size / (gbps * 1e9)})
+    out["memory"] = pd.DataFrame(rows)
+
+    n, size = 100_000_000, 100_000_000 * config.EMBED_DIM * 4         # 2) move the query, not the data
+    rows = []
+    for w in (32, 128):
+        q_out, r_in = w * config.EMBED_DIM * 4, w * K * (8 + 4)
+        rows.append({"shards": w, "rows_per_shard": n // w, "shard_gb": size / w / 1e9,
+                     "scan_ms": size / w / (gbps * 1e9) * 1e3, "query_out_kb": q_out / 1e3,
+                     "results_in_kb": r_in / 1e3, "moved_over_scanned": (q_out + r_in) / size})
+    out["move"] = pd.DataFrame(rows)
+
+    rows = []                                                         # 3) time wall: encoding 100M docs
+    for w in workers_list:
+        s = 1 / (f_ser + (1 - f_ser) / w)
+        rows.append({"workers": w, "amdahl_speedup": s,
+                     "ours_cpu_ideal_days": n / (docs_per_s * w) / 86400, "ours_cpu_with_f_days": n / docs_per_s / s / 86400,
+                     "assumed_1000dps_with_f_hours": n / docs_per_s_assumed / s / 3600})
+    out["encode"] = pd.DataFrame(rows)
+
+    rows = []                                                         # 4) reliability wall
+    enc32 = out["encode"].set_index("workers").ours_cpu_with_f_days.get(32, np.nan) * 24
+    for w, h in ((1, 1), (32, 1), (128, 8), (1000, 24), (32, round(float(enc32))) if enc32 == enc32 else (32, 24)):
+        rows.append({"workers": w, "job_hours": h, "p_failure": 1 - math.exp(-w * h / (mtbf_days * 24))})
+    out["failure"] = pd.DataFrame(rows)
+
+    for name, df in out.items():
+        bench.save_csv(df, f"scale_{name}", STAGE)
+    bench.update_summary(STAGE, scale_inputs={"scan_gbps": gbps, "ram_gb": ram / 1e9, "docs_per_s_measured": docs_per_s,
+                                              "assumed_serial_fraction_f": f_ser, "assumed_docs_per_s": docs_per_s_assumed,
+                                              "assumed_mtbf_days": mtbf_days})
+    return out
+
+
+def five_questions(final_name):
+    """Week 5: 'the systems differ, the questions do not' - split / assign / move / wait / fail, for the
+    engine we built (one machine) and for the same search at 100M documents (a cluster)."""
+    s3 = bench.load_summary("3_parallelism")
+    flaky = next((r for r in s3.get("summary", []) if "fail" in r["strategy"]), None)
+    scal = pd.read_csv(config.stage_dir(STAGE) / "scaling.csv")
+    fin = scal[(scal.version == "final") & (scal.kind == "real")]
+    final_ms = float(fin.loc[fin.n_docs.idxmax(), "batch_s"] * 1e3) if len(fin) else float("nan")
+    rows = [
+        ("Split", "matmul: BLAS splits the GEMM into cache-sized blocks; top-k and re-rank: the 200 query rows over the "
+                  "Numba prange threads; the corpus stays whole (61 MB, fits L3)",
+         "by document: 32-128 shards of the corpus, one per machine"),
+        ("Assign", "static: BLAS and OpenMP give each thread an equal block (every query costs the same)",
+         "one task per shard (Dask / Ray scheduler); stateful actors keep their shard loaded"),
+        ("Move", "nothing: shared memory; the corpus is read in place (no pickling)",
+         f"{config.EMBED_DIM * 4 / 1e3:.1f} KB query out, {K * 12} B of (id, score) back per shard"),
+        ("Wait", f"one barrier at the end of prange; the whole batch of 200 queries takes {final_ms:.2f} ms",
+         "the slowest shard, then a merge of shards x k results (tree merge when the fan-in is large)"),
+        ("Fail", "a crash restarts the query (milliseconds, nothing to save)",
+         "retry the shard task: read-only and pure, so running it twice is safe"
+         + (f" (measured: 30% failed attempts, still exact, {flaky['median_s'] * 1e3:.0f} ms)" if flaky else "")),
+    ]
+    df = pd.DataFrame(rows, columns=["question", f"our engine ({final_name})", "same search at 100M docs"])
+    bench.save_csv(df, "five_questions", STAGE)
+    return df
 
 
 def demo(engine, corpus, model, text, k=5):
@@ -370,12 +478,17 @@ def main():
     cont = thread_contention(configs)
     final_name, final_kw = choose_final(stages, configs)
     print("final:", final_name, final_kw)
-    print(correctness(X, Q, ref, final_kw))
+    corr = correctness(X, Q, ref, final_kw)
+    print(corr)
+    print(float32_precision(corr))
     scal = scaling(X, Q, final_kw)
     slope_df = slopes(scal)
     plot_scaling(scal, final_name)
     allv = all_versions(scal, final_name)
     plot_all_versions(allv)
+    for name, df in scale_walls().items():
+        print(name, df, sep="\n")
+    print(five_questions(final_name))
     for v in finalize(stages, cont, scal, slope_df, allv, final_name).values():
         print(v, "\n")
 

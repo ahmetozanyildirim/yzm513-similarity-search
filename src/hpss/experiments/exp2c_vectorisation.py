@@ -28,11 +28,130 @@ def load():
 
 def compile_cost(Q, X):
     """First call of a fresh (uncached) Numba function = compilation + run."""
-    fresh = njit(kernels.cosine_matrix_numba.py_func)
-    t0 = time.perf_counter(); fresh(Q[:5], X[:500]); t1 = time.perf_counter(); fresh(Q[:5], X[:500]); t2 = time.perf_counter()
-    out = {"first_call_s": t1 - t0, "second_call_s": t2 - t1}
+    firsts, seconds = [], []
+    for _ in range(5):                                   # 5 fresh dispatchers = 5 independent compilations
+        fresh = njit(kernels.cosine_matrix_numba.py_func)
+        t0 = time.perf_counter(); fresh(Q[:5], X[:500]); t1 = time.perf_counter(); fresh(Q[:5], X[:500]); t2 = time.perf_counter()
+        firsts.append(t1 - t0); seconds.append(t2 - t1)
+    out = {"first_compile_in_process_s": firsts[0],          # includes Numba / LLVM initialising itself
+           "compile_median_s": float(np.median(firsts)), "second_call_s": float(np.median(seconds))}
     bench.update_summary(STAGE, numba_compile=out)
     return out
+
+
+def cache_load_cost():
+    """First call in a FRESH process when the compiled code is already in Numba's on-disk cache (cache=True)."""
+    import subprocess
+    import sys
+    code = ("import time, numpy as np; from hpss import data, kernels; X, Q = data.load_embeddings(n=500); "
+            "t0 = time.perf_counter(); kernels.cosine_matrix_numba(Q[:5], X); t1 = time.perf_counter(); "
+            "kernels.cosine_matrix_numba(Q[:5], X); t2 = time.perf_counter(); print(t1 - t0, t2 - t1)")
+    runs = [subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout.split()
+            for _ in range(5)]                           # 5 fresh processes, median
+    res = {"first_call_from_cache_s": float(np.median([float(o[0]) for o in runs])),
+           "second_call_s": float(np.median([float(o[1]) for o in runs]))}
+    bench.update_summary(STAGE, numba_cache=res)
+    return res
+
+
+# ---------------------------------------------------------------- memory layout & NumPy idioms (week 2)
+@njit(cache=True)
+def _row_norms_loop(A):
+    n, d = A.shape
+    out = np.empty(n)
+    for i in range(n):
+        s = 0.0
+        for t in range(d):
+            s += A[i, t] * A[i, t]
+        out[i] = np.sqrt(s)
+    return out
+
+
+def layout_facts(X):
+    """shape / dtype / strides / flags of the corpus and of typical views and copies."""
+    idx = np.arange(0, len(X), 7)
+    cases = {"X (C order)": X, "X.T (transpose)": X.T, "np.asfortranarray(X)": np.asfortranarray(X),
+             "X[:, :128] (slice)": X[:, :128], "X[::2] (step slice)": X[::2], "X[idx] (fancy index)": X[idx]}
+    rows = [{"array": k, "shape": str(a.shape), "strides": str(a.strides), "C_contiguous": a.flags["C_CONTIGUOUS"],
+             "F_contiguous": a.flags["F_CONTIGUOUS"], "shares_memory_with_X": bool(np.shares_memory(a, X)),
+             "MB": a.nbytes / 2**20} for k, a in cases.items()]
+    return pd.DataFrame(rows)
+
+
+def layout_experiments(Q, X):
+    """Pairs of (good, bad) ways to do the same thing; warm-up + 5 runs each."""
+    Xf = np.asfortranarray(X)
+    Qn = data.normalize_rows(Q).astype(np.float32)
+    idx = np.random.default_rng(0).choice(len(X), 2_000, replace=False)
+    X64, Q64 = X.astype(np.float64), Qn.astype(np.float64)
+    norms = np.linalg.norm(X, axis=1, keepdims=True)
+    cand = np.random.default_rng(1).integers(0, len(X), (len(Qn), 100))
+    Xc = X[cand]                                                   # (200, 100, 768) gathered candidates
+    from ..kernels import candidate_scores
+
+    def inplace():
+        Y = X.copy()                                               # same copy in both versions (fair)
+        Y /= norms
+        return Y
+
+    def outofplace():
+        Y = X.copy()
+        return Y / norms
+
+    pairs = [
+        ("row loop (Numba)", "C order (rows contiguous)", lambda: _row_norms_loop(X),
+         "F order (rows strided)", lambda: _row_norms_loop(Xf)),
+        ("GEMM Q @ X.T", "contiguous X[:, :384] copy", (lambda Xs=np.ascontiguousarray(X[:, :384]): Qn[:, :384] @ Xs.T),
+         "strided view X[:, ::2]", lambda: Qn[:, ::2] @ X[:, ::2].T),
+        ("select 2,000 rows", "slice X[:2000] (view)", lambda: X[:2000],
+         "fancy index X[idx] (copy)", lambda: X[idx]),
+        ("normalise rows", "in place: Y /= norms", inplace,
+         "new array: Y / norms", outofplace),
+        ("GEMM 200 x 20K x 768", "float32", lambda: Qn @ X.T,
+         "float64", lambda: Q64 @ X64.T),
+        ("scores Q . X", "Q @ X.T (BLAS)", lambda: Qn @ X.T,
+         "einsum('qd,nd->qn') no optimize", lambda: np.einsum("qd,nd->qn", Qn, X)),
+        ("re-rank 200 x 100 cands", "Numba, reads rows in place", lambda: candidate_scores(Qn, X, cand),
+         "einsum('qd,qcd->qc') on gathered copy", lambda: np.einsum("qd,qcd->qc", Qn, X[cand])),
+    ]
+    rows = []
+    for op, good_name, good, bad_name, bad in pairs:
+        tg = bench.benchmark(good, warmup=2, runs=5)["median"]
+        tb = bench.benchmark(bad, warmup=2, runs=5)["median"]
+        rows.append({"operation": op, "good": good_name, "good_ms": tg * 1e3, "bad": bad_name, "bad_ms": tb * 1e3,
+                     "ratio": tb / tg})
+    df = pd.DataFrame(rows)
+    peak_in, _ = bench.peak_memory_mb(inplace)
+    peak_out, _ = bench.peak_memory_mb(outofplace)
+    bench.save_csv(df, "memory_layout", STAGE)
+    bench.update_summary(STAGE, memory_layout=df.to_dict("records"),
+                         normalise_peak_mb={"in_place": peak_in, "new_array": peak_out},
+                         gathered_candidates_mb=Xc.nbytes / 2**20)
+    return df, {"in_place": peak_in, "new_array": peak_out}
+
+
+def plot_layout(df):
+    fig, ax = plt.subplots(figsize=(10.5, 0.55 * len(df) + 1.4))
+    y = np.arange(len(df))
+    ax.barh(y - 0.19, df.good_ms, height=0.36, color=P.color("numpy"), edgecolor="white", label="good / layout-aware")
+    ax.barh(y + 0.19, df.bad_ms, height=0.36, color=P.color("python"), edgecolor="white", label="bad / layout-unaware")
+    for i, r in df.iterrows():
+        ax.annotate(f"{r.ratio:,.1f}x", xy=(max(r.good_ms, r.bad_ms), i), xytext=(5, 0), textcoords="offset points",
+                    va="center", fontsize=9, color=P.INK_2)
+    ax.set_yticks(y, df.operation)
+    ax.invert_yaxis(); ax.grid(axis="y", visible=False)
+    ax.set_xscale("log"); ax.set_xlabel("time (ms, log); label = bad / good")
+    ax.set_title("(d) Same result, different memory layout or idiom", fontsize=11)
+    ax.legend(loc="lower right", fontsize=8.5)
+    P.savefig(fig, "fig4d_memory_layout", STAGE)
+    r = df.set_index("operation").ratio
+    bench.save_caption(STAGE, "fig4d_memory_layout", (
+        f"Figure 4d: How the data is laid out and touched matters as much as the arithmetic: a fancy-index copy is "
+        f"{r['select 2,000 rows']:,.0f}x slower than a slice view, an einsum that bypasses BLAS {r['scores Q . X']:.0f}x slower "
+        f"than Q @ X.T, gathering candidate rows before re-ranking {r['re-rank 200 x 100 cands']:.0f}x slower than reading them in "
+        f"place, and float64 {r['GEMM 200 x 20K x 768']:.1f}x slower than float32; row-major vs column-major access costs only "
+        f"{r['row loop (Numba)']:.1f}x here because the 59 MB corpus fits in the 96 MB L3 cache."))
+    return fig
 
 
 def check_correctness(Q, X):
@@ -133,7 +252,11 @@ def main():
     P.setup_style()
     X, Q = load()
     print(compile_cost(Q, X))
+    print(cache_load_cost())
     print(check_correctness(Q, X))
+    print(layout_facts(X))
+    layout, _ = layout_experiments(Q, X)
+    plot_layout(layout)
     main_df = main_comparison(Q, X)
     sweep = size_sweep(Q, X)
     plot_figure4(main_df, sweep)
