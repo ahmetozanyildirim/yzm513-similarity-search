@@ -1,0 +1,73 @@
+{
+  "system": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+    "physical_cores": 8,
+    "logical_cores": 16,
+    "ram_gb": 31.2,
+    "os": "Windows 11 (10.0.26200)",
+    "python": "3.12.10",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "numba": "0.68.0",
+    "blas": [
+      {
+        "internal_api": "openblas",
+        "num_threads": 16,
+        "architecture": "SkylakeX",
+        "version": "0.3.34.106.0"
+      },
+      {
+        "internal_api": "openblas",
+        "num_threads": 16,
+        "architecture": "SkylakeX",
+        "version": "0.3.31.dev"
+      }
+    ],
+    "numba_threads": 16,
+    "in_colab": false
+  },
+  "preprocessing": {
+    "raw_records": 31500,
+    "after_dedup_id": 24866,
+    "after_dedup_text": 24865,
+    "after_min_words": 24833,
+    "final_docs": 20000,
+    "raw_cells": 63
+  },
+  "dataset": {
+    "n_docs": 20000,
+    "n_queries": 200,
+    "words_mean": 178.02225,
+    "words_median": 177.0,
+    "tokens_mean": 261.1363,
+    "tokens_median": 258.0,
+    "tokens_min": 59,
+    "tokens_max": 1052,
+    "frac_truncated": 0.0382,
+    "model_max_tokens": 384,
+    "query_words_mean": 10.4,
+    "date_min": "2025-01-01",
+    "date_max": "2026-09-05",
+    "primary_category_counts": {
+      "cs.CL": 5869,
+      "cs.LG": 5212,
+      "cs.AI": 2303,
+      "cs.CV": 1786,
+      "cs.CR": 515,
+      "cs.RO": 416,
+      "stat.ML": 381,
+      "cs.IR": 338
+    }
+  },
+  "sanity": {
+    "hit1": 0.74,
+    "hit10": 0.9,
+    "emb_norm_min": 0.9999998211860657,
+    "emb_norm_max": 1.0000001192092896
+  },
+  "dataset_paragraph": "We use 20,000 abstracts of arXiv papers submitted between 2025-01-01 and 2026-09-05 in cs.AI, cs.CL and cs.LG (Option B). Raw API records: 31,500; after removing cross-listed duplicates (24,866), identical texts (24,865) and abstracts shorter than 50 words (24,833), we randomly sample 20,000 documents (seed 42). Abstracts have 261 tokens on average (median 258; 3.8% exceed the model's 384-token window). Queries are the titles of 200 papers (10.4 words on average); the matching abstract is the known correct answer: with all-mpnet-base-v2 (768-d) embeddings it is ranked first for 74% of the queries and within the top-10 for 90%.",
+  "captions": {
+    "fig0_dataset": "Figure 0: The corpus consists of 20,000 arXiv abstracts (2025-26) with 261 tokens on average, well above the 50-token minimum; only 3.8% exceed the embedding model's 384-token window."
+  }
+}
