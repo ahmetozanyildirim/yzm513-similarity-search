@@ -160,14 +160,14 @@ def check_correctness(Q, X):
             for name, (_, fn, _) in VERSIONS.items() if name != "Pure Python"}
 
 
-def main_comparison(Q, X, n_queries=20, n_docs=2_000):
-    """All five versions on the same size (small enough for pure Python)."""
+def main_comparison(Q, X, n_queries=200, n_docs=20_000):
+    """All five versions on the project's real workload (200 queries x 20,000 docs x 768), warm-up + 5 runs each."""
     if config.QUICK:
-        n_docs = 300
+        n_queries, n_docs = 20, 300
     Qm, Xm = Q[:n_queries], X[:n_docs]
     rows = []
     for label, (key, fn, wu) in VERSIONS.items():
-        r = bench.benchmark(fn, Qm, Xm, warmup=wu, runs=5)
+        r = bench.benchmark(fn, Qm, Xm, warmup=wu, runs=5, progress=label if key == "python" else None)
         rows.append({"version": label, "key": key, "median_s": r["median"], "std_s": r["std"]})
         print(f"{label:>24}: {bench.fmt_time(r['median'])}")
     df = pd.DataFrame(rows)

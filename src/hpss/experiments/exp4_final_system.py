@@ -212,8 +212,7 @@ def scaling(X, Q, final_kw):
         print(f"N={n:>7,} ({kind}) done")
     scal = pd.DataFrame(rows)
     b1 = bench.require_stage("1_baseline")
-    naive = pd.DataFrame(b1["naive_per_pair_us_by_n"].items(), columns=["n_docs", "per_pair_us"]).astype(float)
-    naive["batch_s"] = naive.per_pair_us * 1e-6 * naive.n_docs * len(Q)
+    naive = pd.DataFrame(list(b1["naive_by_n"].items()), columns=["n_docs", "batch_s"]).astype(float)   # measured
     naive["version"], naive["kind"] = "naive", "real"
     scal = pd.concat([scal, naive[["n_docs", "kind", "version", "batch_s"]]], ignore_index=True)
     scal["n_docs"] = scal.n_docs.astype(int)
@@ -283,13 +282,12 @@ def all_versions(scal, final_name):
     """Same workload (200 queries x 20K) for every version built in the project."""
     b1 = bench.require_stage("1_baseline")
     s3 = bench.require_stage("3_parallelism")
-    fixes = {r["version"]: r["median_s"] for r in b1["python_fixes"]}
-    scale = b1["baseline"]["full_workload_s_estimate"] / fixes["naive (baseline)"]   # ladder ratio -> 200 x 20K
+    fixes = {r["version"]: r["median_s"] for r in b1["python_fixes"]}      # all measured on 200 x 20K in stage 1
     n_big = scal[scal.kind == "real"].n_docs.max()
     s = scal[scal.n_docs == n_big].set_index("version").batch_s
-    rows = [("Naive Python (baseline)", "python", b1["baseline"]["full_workload_s_estimate"]),
-            ("Python: norms once", "python", fixes["fix 2: norms once"] * scale),
-            ("Python: sum(map) + heapq", "python", fixes["fix 1+3: sum(map) + heapq"] * scale)]
+    rows = [("Naive Python (baseline)", "python", b1["baseline"]["median_s"]),
+            ("Python: norms once", "python", fixes["fix 2: norms once"]),
+            ("Python: sum(map) + heapq", "python", fixes["fix 1+3: sum(map) + heapq"])]
     skip = ("asyncio", "fail", "ray.wait", "memmap")         # not separate versions of the search (variants / demos)
     for r in s3["summary"]:
         if not any(w in r["strategy"] for w in skip):

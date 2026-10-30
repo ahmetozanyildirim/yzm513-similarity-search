@@ -9,15 +9,17 @@ import builtins
 
 import numpy as np
 
-from hpss import data, naive
+from hpss import config, data, naive
 
 if hasattr(builtins, "profile"):                 # defined only when run under kernprof
     naive.cosine_similarity_python = builtins.profile(naive.cosine_similarity_python)
     naive.search_naive = builtins.profile(naive.search_naive)
 
 if __name__ == "__main__":
-    X, Q = data.load_embeddings(n=5_000)
+    X, Q = data.load_embeddings()                  # the full baseline workload: 200 queries x 20,000 docs
+    if config.QUICK:                               # smoke test only
+        X, Q = X[:1_000], Q[:5]
     corpus = X.astype(np.float64).tolist()
-    queries = Q[:5].astype(np.float64).tolist()
+    queries = Q.astype(np.float64).tolist()
     res = naive.search_naive(queries, corpus, 10)
     print("top-3 of query 0:", res[0][:3])

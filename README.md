@@ -51,7 +51,7 @@ pip install -r requirements.txt
 pip install -e .
 
 python scripts/prepare_data.py         # ~10 min download + ~40 min embedding on a laptop CPU (1-2 min on a GPU); cached
-python scripts/run_all.py              # all phases, ~25 min; or e.g. `python scripts/run_all.py 1 2a`
+python scripts/run_all.py              # all phases, ~2 h (full workloads, no extrapolation); or e.g. `python scripts/run_all.py 1 2a`
 python scripts/collect_results.py      # fact sheet of all numbers and captions
 python scripts/demo.py --compare-naive "speculative decoding for LLM inference"
 ```

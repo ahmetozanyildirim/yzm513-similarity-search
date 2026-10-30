@@ -35,32 +35,36 @@ def small_correctness(corpus_list, query_list, X, Q):
     return bench.compare_topk(idx, sc, *bench.to_arrays(ref)), ref
 
 
-def baseline_time(corpus_list, query_list, n_queries=10):
-    """Naive search of n_queries against all 20K docs; warm-up 1 + 5 timed runs."""
+def workload(corpus_list, query_list):
+    """The benchmark workload: all 200 queries; corpus sizes 1K, 5K, 10K, 20K (spec). QUICK = smoke test only."""
     if config.QUICK:
-        corpus_list, n_queries = corpus_list[:2000], 2
-    res = bench.benchmark(naive.search_naive, query_list[:n_queries], corpus_list, K, warmup=1, runs=5)
-    per_query = res["median"] / n_queries
-    out = {"n_docs": len(corpus_list), "queries_timed": n_queries, "median_s": res["median"],
-           "mean_s": res["mean"], "std_s": res["std"], "per_query_s": per_query,
-           "per_pair_us": per_query / len(corpus_list) * 1e6,
-           "full_workload_s_estimate": per_query * len(query_list), "raw_times": res["raw_times"]}
-    bench.update_summary(STAGE, baseline=out)
-    return out
+        return query_list[:20], [1_000, 2_000]
+    return query_list, config.CORPUS_SIZES
 
 
-def naive_scaling(corpus_list, query_list, n_queries=5):
-    rows = []
-    sizes = [1_000, 2_000] if config.QUICK else config.CORPUS_SIZES
+def naive_full(corpus_list, query_list):
+    """The baseline exactly as the spec asks - nothing extrapolated: the naive search of ALL 200 queries against
+    1K, 5K, 10K and 20K documents, 1 warm-up + 5 timed runs at every size. The 20K row is the baseline time.
+    The top-k lists these runs return are stored as the correctness reference of every later stage."""
+    queries, sizes = workload(corpus_list, query_list)
+    rows, store = [], {}
     for n in sizes:
-        r = bench.benchmark(naive.search_naive, query_list[:n_queries], corpus_list[:n], K, warmup=1, runs=5)
-        rows.append({"n_docs": n, "queries": n_queries, "median_s": r["median"], "std_s": r["std"],
-                     "per_query_s": r["median"] / n_queries,
-                     "per_pair_us": r["median"] / n_queries / n * 1e6})
+        r = bench.benchmark(naive.search_naive, queries, corpus_list[:n], K, warmup=1, runs=5,
+                            progress=f"{len(queries)} queries x {n:,} docs")
+        store[f"idx_{n}"], store[f"sc_{n}"] = bench.to_arrays(r["result"])
+        rows.append({"n_docs": n, "queries": len(queries), "median_s": r["median"], "mean_s": r["mean"],
+                     "std_s": r["std"], "min_s": r["min"], "max_s": r["max"],
+                     "per_query_s": r["median"] / len(queries), "per_pair_us": r["median"] / len(queries) / n * 1e6,
+                     "raw_times": r["raw_times"]})
     df = pd.DataFrame(rows)
     bench.save_csv(df, "naive_scaling", STAGE)
-    bench.update_summary(STAGE, naive_per_pair_us_by_n=df.set_index("n_docs").per_pair_us.to_dict())
-    return df
+    baseline = rows[-1]
+    bench.update_summary(STAGE, baseline=baseline, naive_by_n=df.set_index("n_docs").median_s.to_dict())
+    if config.QUICK:                          # smoke test: later stages still need the 200 x 20K reference
+        compute_reference(np.asarray(corpus_list), query_list)              # writes the file
+    else:
+        np.savez(config.baseline_topk_path(), **store)
+    return df, baseline, store
 
 
 def _short_name(fn):
@@ -74,16 +78,15 @@ def _short_name(fn):
     return m.group(1) if m else fn
 
 
-def run_cprofile(corpus_list, query_list, n_queries=5, n_docs=5_000):
-    """cProfile of search_naive only (runcall), plus its overhead vs an unprofiled run."""
-    if config.QUICK:
-        n_docs = 1_000
+def run_cprofile(corpus_list, query_list, baseline):
+    """cProfile of search_naive only (runcall) on the full baseline workload (200 queries x 20K docs);
+    its overhead is measured against the unprofiled baseline median of the same workload."""
+    queries, sizes = workload(corpus_list, query_list)
     pr = cProfile.Profile()
     t0 = time.perf_counter()
-    pr.runcall(naive.search_naive, query_list[:n_queries], corpus_list[:n_docs], K)
+    pr.runcall(naive.search_naive, queries, corpus_list[:sizes[-1]], K)
     t_prof = time.perf_counter() - t0
-    t_plain = bench.benchmark(naive.search_naive, query_list[:n_queries], corpus_list[:n_docs], K,
-                              warmup=1, runs=5)["median"]
+    t_plain = baseline["median_s"]
     out_dir = config.stage_dir(STAGE)
     pr.dump_stats(out_dir / "cprofile.prof")
     buf = io.StringIO()
@@ -100,8 +103,14 @@ def run_cprofile(corpus_list, query_list, n_queries=5, n_docs=5_000):
     return prof, buf.getvalue(), t_prof, t_plain
 
 
-def run_line_profiler(corpus_list, query_list, n_queries=2, n_docs=2_000):
+def run_line_profiler(corpus_list, query_list, n_queries=10):
+    """line_profiler slows this code down ~14x, so it runs on 10 queries against the FULL 20K corpus (~2 min).
+    It reports shares of time per line - every query runs exactly the same lines, so the shares do not depend
+    on the number of queries; no time is extrapolated from it."""
     from line_profiler import LineProfiler
+    n_docs = workload(corpus_list, query_list)[1][-1]
+    if config.QUICK:
+        n_queries = 2
     lp = LineProfiler(naive.cosine_similarity_python, naive.search_naive)
     lp.runcall(naive.search_naive, query_list[:n_queries], corpus_list[:n_docs], K)
     buf = io.StringIO()
@@ -122,7 +131,7 @@ def run_line_profiler(corpus_list, query_list, n_queries=2, n_docs=2_000):
 
 
 def run_pyspy(rate=200):
-    """Sampling profiler: flame graph of scripts/profile_naive.py (5 queries x 5,000 docs).
+    """Sampling profiler: flame graph of scripts/profile_naive.py (the full baseline workload, ~3 min).
 
     --subprocesses is needed on Windows: the venv's python.exe is a launcher that starts
     the real interpreter as a child process. Returns the SVG path, or None if py-spy is unavailable.
@@ -134,17 +143,20 @@ def run_pyspy(rate=200):
     try:
         subprocess.run([exe, "record", "--subprocesses", "--rate", str(rate), "--format", "flamegraph",
                         "-o", str(out), "--", sys.executable, str(config.ROOT / "scripts" / "profile_naive.py")],
-                       check=True, capture_output=True, text=True, timeout=300)
+                       check=True, capture_output=True, text=True, timeout=1800)
     except (OSError, subprocess.SubprocessError) as e:
         print("py-spy could not run:", repr(e)[:200])
         return None
     return out
 
 
-def reprofile_after_fix(corpus_list, query_list, n_queries=2, n_docs=2_000):
+def reprofile_after_fix(corpus_list, query_list, n_queries=10):
     """'Profile first. Fix the top bottleneck. Re-profile.' (week 1): line profile of the version with
-    norms computed once - what is the next bottleneck?"""
+    norms computed once - what is the next bottleneck? Same 10 queries x full corpus as run_line_profiler."""
     from line_profiler import LineProfiler
+    n_docs = workload(corpus_list, query_list)[1][-1]
+    if config.QUICK:
+        n_queries = 2
     normed = naive.normalize_python(corpus_list[:n_docs])
     lp = LineProfiler(naive.search_python_prenorm)
     lp.runcall(naive.search_python_prenorm, query_list[:n_queries], normed, K)
@@ -182,12 +194,12 @@ def plot_profiling(prof, cos_lines):
     return fig
 
 
-def python_fixes(corpus_list, query_list, X, Q, n_queries=10, n_docs=5_000):
-    """Test the bottleneck hypotheses: remove each one while staying in pure Python."""
-    if config.QUICK:
-        n_docs = 1_000
-    c_small = corpus_list[:n_docs]
-    c_normed = naive.normalize_python(c_small)               # done once at indexing time (not timed)
+def python_fixes(corpus_list, query_list, X, Q, baseline, store):
+    """Test the bottleneck hypotheses: remove each one while staying in pure Python. Same full workload as the
+    baseline (200 queries x 20K docs), 1 warm-up + 5 runs each; the naive row IS the baseline measurement."""
+    queries, sizes = workload(corpus_list, query_list)
+    n_docs, n_queries = sizes[-1], len(queries)
+    c_normed = naive.normalize_python(corpus_list[:n_docs])  # done once at indexing time (not timed)
     X64 = data.normalize_rows(X[:n_docs].astype(np.float64))
     Q64 = Q[:n_queries].astype(np.float64)
 
@@ -196,21 +208,22 @@ def python_fixes(corpus_list, query_list, X, Q, n_queries=10, n_docs=5_000):
             return search_numpy(data.normalize_rows(Qm), Xn, k)
 
     ladder = {
-        "naive (baseline)": (naive.search_naive, (query_list[:n_queries], c_small, K)),
-        "fix 2: norms once": (naive.search_python_prenorm, (query_list[:n_queries], c_normed, K)),
-        "fix 1+3: sum(map) + heapq": (naive.search_python_builtin, (query_list[:n_queries], c_normed, K)),
+        "fix 2: norms once": (naive.search_python_prenorm, (queries, c_normed, K)),
+        "fix 1+3: sum(map) + heapq": (naive.search_python_builtin, (queries, c_normed, K)),
         "NumPy (1 thread, reference)": (numpy_1thread, (Q64, X64, K)),
     }
-    ref = bench.to_arrays(naive.search_naive(query_list[:n_queries], c_small, K))
-    rows = []
+    ref = store[f"idx_{n_docs}"][:n_queries], store[f"sc_{n_docs}"][:n_queries]
+    rows = [{"version": "naive (baseline)", "median_s": baseline["median_s"], "std_s": baseline["std_s"],
+             "correct": True}]                                       # measured above, not re-run
     for name, (fn, args) in ladder.items():
-        r = bench.benchmark(fn, *args, warmup=1, runs=5)
+        r = bench.benchmark(fn, *args, warmup=1, runs=5, progress=name if fn is not numpy_1thread else None)
         out = r["result"]
         idx, sc = bench.to_arrays(out) if isinstance(out, list) else out
         rows.append({"version": name, "median_s": r["median"], "std_s": r["std"],
                      "correct": bench.compare_topk(idx, sc, *ref)["all_ok"]})
     df = pd.DataFrame(rows)
     df["speedup"] = df.median_s.iloc[0] / df.median_s
+    df["workload"] = f"{n_queries} queries x {n_docs:,} docs"
     bench.save_csv(df, "python_fixes", STAGE)
     bench.update_summary(STAGE, python_fixes=df.to_dict("records"))
     return df
@@ -227,10 +240,10 @@ def memory_layout(corpus_list, X):
 
 
 def compute_reference(X, query_list, workers=None):
-    """Naive top-k for all 200 queries at every corpus size - the correctness reference of later stages.
-    Same search_naive code, split over worker processes (otherwise ~5 min)."""
+    """QUICK (smoke test) only: the timed runs used a subset, but later stages need the 200 x 20K reference.
+    Same search_naive code, split over worker processes. In a real run the reference is the output of naive_full."""
     workers = workers or bench.n_cores()
-    sizes = [1_000, 20_000] if config.QUICK else config.CORPUS_SIZES       # later stages need the 20K reference
+    sizes = [1_000, 20_000]
     store, t0 = {}, time.perf_counter()
     with parallel.make_python_pool(X, workers) as pool:
         for n in sizes:
@@ -241,9 +254,13 @@ def compute_reference(X, query_list, workers=None):
     return store
 
 
-def check_reference(store, corpus_list, query_list):
+def check_reference(corpus_list, query_list):
+    """Spot check of the saved file: a fresh naive run of 3 queries x 1,000 docs gives exactly the stored results."""
+    saved = np.load(config.baseline_topk_path())
     seq = bench.to_arrays(naive.search_naive(query_list[:3], corpus_list[:1000], K))
-    return bool(np.array_equal(seq[0], store["idx_1000"][:3]) and np.array_equal(seq[1], store["sc_1000"][:3]))
+    return {"sizes": sorted(int(k[4:]) for k in saved.files if k.startswith("idx_")),
+            "queries": int(saved["idx_1000"].shape[0]),
+            "identical": bool(np.array_equal(seq[0], saved["idx_1000"][:3]) and np.array_equal(seq[1], saved["sc_1000"][:3]))}
 
 
 def finalize(prof, cos_lines, fixes, baseline):
@@ -256,27 +273,27 @@ def finalize(prof, cos_lines, fixes, baseline):
            f"and the three multiply-add lines take {loop_pct:.1f}% in near-equal shares - the cost is interpreter overhead "
            f"per float operation, and two of the three multiply-adds only recompute norms.")
     bench.save_caption(STAGE, "fig1_profiling", cap)
-    return (f"{cap}\n\nBaseline: {baseline['per_query_s'] * 1e3:.0f} ms per query on {baseline['n_docs']:,} docs "
-            f"({baseline['per_pair_us']:.1f} us per pair); 200 queries ~ {baseline['full_workload_s_estimate']:.0f} s. "
-            f"Pure-Python fixes reach {fixes.speedup.iloc[2]:.1f}x; NumPy (1 thread) {fixes.speedup.iloc[3]:.0f}x.")
+    return (f"{cap}\n\nBaseline (measured, median of 5 runs): {baseline['queries']} queries x {baseline['n_docs']:,} docs "
+            f"in {baseline['median_s']:.1f} s (std {baseline['std_s']:.2f} s) = {baseline['per_query_s'] * 1e3:.0f} ms per query, "
+            f"{baseline['per_pair_us']:.1f} us per pair. Pure-Python fixes reach {fixes.speedup.iloc[2]:.1f}x; "
+            f"NumPy (1 thread) {fixes.speedup.iloc[3]:,.0f}x.")
 
 
 def main():
     P.setup_style()
     X, Q, corpus_list, query_list = load_lists()
     print(small_correctness(corpus_list, query_list, X, Q)[0])
-    baseline = baseline_time(corpus_list, query_list)
-    print(naive_scaling(corpus_list, query_list))
-    prof, _, _, _ = run_cprofile(corpus_list, query_list)
+    scaling, baseline, store = naive_full(corpus_list, query_list)
+    print(scaling)
+    prof, _, _, _ = run_cprofile(corpus_list, query_list, baseline)
     cos_lines, _, _ = run_line_profiler(corpus_list, query_list)
     plot_profiling(prof, cos_lines)
     print("flame graph:", run_pyspy())
-    fixes = python_fixes(corpus_list, query_list, X, Q)
+    fixes = python_fixes(corpus_list, query_list, X, Q, baseline, store)
     print(fixes)
     print(reprofile_after_fix(corpus_list, query_list).head(5))
     print(memory_layout(corpus_list, X))
-    store = compute_reference(X, query_list)
-    print("reference == sequential naive:", check_reference(store, corpus_list, query_list))
+    print("saved reference:", check_reference(corpus_list, query_list))
     print(finalize(prof, cos_lines, fixes, baseline))
 
 

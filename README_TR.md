@@ -45,7 +45,7 @@ pip install -r requirements.txt
 pip install -e .
 
 python scripts/prepare_data.py         # ~10 dk indirme + dizüstü CPU'da ~40 dk embedding (GPU'da 1-2 dk); önbelleğe alınır
-python scripts/run_all.py              # bütün fazlar ~25 dk; ya da ör. `python scripts/run_all.py 1 2a`
+python scripts/run_all.py              # bütün fazlar ~2 saat (tam iş yükleri, tahmin yok); ya da ör. `python scripts/run_all.py 1 2a`
 python scripts/collect_results.py      # bütün sayı ve başlıkların özeti
 python scripts/demo.py --compare-naive "speculative decoding for LLM inference"
 ```

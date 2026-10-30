@@ -27,20 +27,26 @@ from . import config
 # Timing & memory
 # ======================================================================
 
-def benchmark(func, *args, warmup=config.WARMUP, runs=config.RUNS, **kwargs):
+def benchmark(func, *args, warmup=config.WARMUP, runs=config.RUNS, progress=None, **kwargs):
     """Time `func(*args, **kwargs)` with `warmup` discarded calls and `runs` timed calls.
 
     Returns a dict with median/mean/std/min/max (seconds), the raw times and the
     result of the last call (so the caller can check correctness).
+    progress: a label -> print every call's time as it finishes (for runs of minutes).
     """
     result = None
-    for _ in range(warmup):
+    for i in range(warmup):
+        t0 = time.perf_counter()
         result = func(*args, **kwargs)
+        if progress:
+            print(f"{progress}: warm-up {i + 1}/{warmup} {time.perf_counter() - t0:.1f} s", flush=True)
     times = []
-    for _ in range(runs):
+    for i in range(runs):
         t0 = time.perf_counter()
         result = func(*args, **kwargs)
         times.append(time.perf_counter() - t0)
+        if progress:
+            print(f"{progress}: run {i + 1}/{runs} {times[-1]:.1f} s", flush=True)
     t = np.asarray(times)
     return {
         "median": float(np.median(t)),

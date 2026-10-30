@@ -57,8 +57,8 @@ def correct(out, ref, n=None):
 
 
 def naive_full_seconds():
-    """Naive baseline for the full workload (measured per-query time of stage 1 x 200)."""
-    return bench.require_stage("1_baseline")["baseline"]["full_workload_s_estimate"]
+    """Naive baseline for the full workload (200 queries x 20K docs), measured in stage 1 (median of 5 runs)."""
+    return bench.require_stage("1_baseline")["baseline"]["median_s"]
 
 
 def phase2_reference(Qn, Xn, ref):
