@@ -1,6 +1,5 @@
 """Stage 1 (Phase 1) - naive baseline, profiling and the top-3 bottlenecks (report section 2)."""
 
-import cProfile
 import io
 import linecache
 import pstats
@@ -78,26 +77,32 @@ def _short_name(fn):
     return m.group(1) if m else fn
 
 
-def run_cprofile(corpus_list, query_list, baseline):
-    """cProfile of search_naive only (runcall) on the full baseline workload (200 queries x 20K docs);
-    its overhead is measured against the unprofiled baseline median of the same workload."""
-    queries, sizes = workload(corpus_list, query_list)
-    pr = cProfile.Profile()
-    t0 = time.perf_counter()
-    pr.runcall(naive.search_naive, queries, corpus_list[:sizes[-1]], K)
-    t_prof = time.perf_counter() - t0
-    t_plain = baseline["median_s"]
+def run_cprofile(baseline):
+    """cProfile of search_naive only (runcall) on the full baseline workload (200 queries x 20K docs), run in a
+    separate plain Python process (scripts/profile_naive.py --cprofile); its overhead is measured against the
+    unprofiled baseline median of the same workload.
+
+    Why a separate process: since Python 3.12 cProfile is built on sys.monitoring, which sees every thread of the
+    process, but it keeps a single call stack. Inside Jupyter the kernel's I/O threads (asyncio select loop) leak
+    in and get mixed with our calls - e.g. list.sort reported as called by selectors._select. A fresh process
+    runs only our thread."""
+    import subprocess
     out_dir = config.stage_dir(STAGE)
-    pr.dump_stats(out_dir / "cprofile.prof")
+    prof_path = out_dir / "cprofile.prof"
+    run = subprocess.run([sys.executable, str(config.ROOT / "scripts" / "profile_naive.py"),
+                          "--cprofile", str(prof_path)], check=True, capture_output=True, text=True, timeout=3600)
+    t_prof = float(re.search(r"profiled_s (\S+)", run.stdout).group(1))
+    t_plain = baseline["median_s"]
     buf = io.StringIO()
-    pstats.Stats(pr, stream=buf).sort_stats("tottime").print_stats(12)
+    pstats.Stats(str(prof_path), stream=buf).sort_stats("tottime").print_stats(12)
     (out_dir / "cprofile.txt").write_text(buf.getvalue(), encoding="utf-8")
-    st = pstats.Stats(pr)
+    st = pstats.Stats(str(prof_path))
     total = sum(v[2] for v in st.stats.values())
     prof = pd.DataFrame([
         {"function": _short_name(fn), "file": Path(f).name, "ncalls": v[1], "tottime_s": v[2],
          "cumtime_s": v[3], "pct_tottime": 100 * v[2] / total}
-        for (f, _, fn), v in st.stats.items()]).sort_values("tottime_s", ascending=False).reset_index(drop=True)
+        for (f, _, fn), v in st.stats.items()
+        if "_lsprof" not in fn]).sort_values("tottime_s", ascending=False).reset_index(drop=True)  # not the profiler itself
     bench.save_csv(prof, "cprofile_functions", STAGE)
     bench.update_summary(STAGE, cprofile={"profiled_s": t_prof, "plain_s": t_plain, "overhead_x": t_prof / t_plain})
     return prof, buf.getvalue(), t_prof, t_plain
@@ -285,7 +290,7 @@ def main():
     print(small_correctness(corpus_list, query_list, X, Q)[0])
     scaling, baseline, store = naive_full(corpus_list, query_list)
     print(scaling)
-    prof, _, _, _ = run_cprofile(corpus_list, query_list, baseline)
+    prof, _, _, _ = run_cprofile(baseline)
     cos_lines, _, _ = run_line_profiler(corpus_list, query_list)
     plot_profiling(prof, cos_lines)
     print("flame graph:", run_pyspy())
