@@ -1,6 +1,6 @@
 """Reproduce every figure and number of the report, stage by stage.
 
-    python scripts/run_all.py              # all stages (~25 min on an 8-core laptop)
+    python scripts/run_all.py              # all stages (~70 min on the test machine: the pure-Python versions run the full workload)
     python scripts/run_all.py 1 2a         # only these stages
 
 Each stage writes into results/<stage>/. Close other CPU-heavy programs first:

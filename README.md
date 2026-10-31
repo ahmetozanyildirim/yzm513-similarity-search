@@ -7,7 +7,7 @@ similar documents for every query — and make it fast. We start from a pure-Pyt
 bottlenecks one by one (vectorisation, Numba, dimensionality reduction, parallelism), verifying every version against the
 baseline with tolerance 1e-5.
 
-* Report: [`report/REPORT.md`](report/REPORT.md) (PDF: `report/REPORT.pdf`) · Turkish: [`report/RAPOR.md`](report/RAPOR.md)
+* Report: [`report/REPORT.md`](report/REPORT.md) (PDF: `report/REPORT.pdf`) · Turkish: [`report/RAPOR.md`](report/RAPOR.md) (PDF: `report/RAPOR.pdf`)
 * All figures and raw benchmark data: [`results/`](results/) (one folder per project phase)
 
 | | |
@@ -51,7 +51,7 @@ pip install -r requirements.txt
 pip install -e .
 
 python scripts/prepare_data.py         # ~10 min download + ~40 min embedding on a laptop CPU (1-2 min on a GPU); cached
-python scripts/run_all.py              # all phases, ~2 h (full workloads, no extrapolation); or e.g. `python scripts/run_all.py 1 2a`
+python scripts/run_all.py              # all phases, ~70 min on the test machine (full workloads, no extrapolation); or e.g. `python scripts/run_all.py 1 2a`
 python scripts/collect_results.py      # fact sheet of all numbers and captions
 python scripts/demo.py --compare-naive "speculative decoding for LLM inference"
 ```
