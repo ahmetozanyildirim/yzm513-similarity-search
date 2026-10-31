@@ -1,0 +1,9 @@
+config,total_ms,matmul_ms,omp_idle_threads
+exact 768-d + argpartition,15.434600005391985,4.312350007239729,spinning (default)
+exact 768-d + parallel top-k,34.271050011739135,34.128000028431416,spinning (default)
+SVD-128 + re-rank(100) + argpartition,21.821350004756823,1.779000012902543,spinning (default)
+SVD-128 + re-rank(100) + parallel top-k,7.0051500224508345,5.308949999744073,spinning (default)
+exact 768-d + argpartition,15.386000013677403,4.273400001693517,sleeping (PASSIVE)
+exact 768-d + parallel top-k,5.383999989135191,4.44265000987798,sleeping (PASSIVE)
+SVD-128 + re-rank(100) + argpartition,21.73229999607429,1.7452499887440354,sleeping (PASSIVE)
+SVD-128 + re-rank(100) + parallel top-k,3.640399983851239,1.7494000494480133,sleeping (PASSIVE)

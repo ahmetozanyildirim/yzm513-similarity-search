@@ -1,0 +1,4 @@
+method,fit_s,recall@10,same_as_baseline,wrong_ranks
+truncated_svd,0.3178180999821052,1.0,True,0
+power_iteration,2.3671647000010125,1.0,True,0
+pca,0.10754620004445314,0.9805000000000001,False,92

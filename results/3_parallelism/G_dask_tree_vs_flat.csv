@@ -1,0 +1,3 @@
+graph,tasks,width,critical_path,merge_fan_in,median_s,correct
+flat merge (one narrow waist),65,64,2,64,0.02001949999248609,True
+tree merge (fan-in 4),85,64,4,4,0.02268350002123043,True

@@ -1,0 +1,8 @@
+operation,good,good_ms,bad,bad_ms,ratio
+row loop (Numba),C order (rows contiguous),7.1357000269927084,F order (rows strided),7.453300000634044,1.04450859375253
+GEMM Q @ X.T,"contiguous X[:, :384] copy",3.5576000227592885,"strided view X[:, ::2]",8.138799981679767,2.287722040030594
+"select 2,000 rows",slice X[:2000] (view),0.000200001522898674,fancy index X[idx] (copy),0.6024999893270433,3012.4770081490105
+normalise rows,in place: Y /= norms,8.857599983457476,new array: Y / norms,13.391699991188943,1.5118880979271347
+GEMM 200 x 20K x 768,float32,5.3999999654479325,float64,11.167799995746464,2.0681111235562923
+scores Q . X,Q @ X.T (BLAS),5.29980001738295,"einsum('qd,nd->qn') no optimize",399.5507000363432,75.38976918484596
+re-rank 200 x 100 cands,"Numba, reads rows in place",0.221800000872463,"einsum('qd,qcd->qc') on gathered copy",8.188500010874122,36.918394854211854

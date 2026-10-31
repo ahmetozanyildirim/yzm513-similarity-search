@@ -1,0 +1,7 @@
+strategy,workers,median_s,correct
+BLAS threads (NumPy batch),1,0.03348279994679615,True
+BLAS threads (NumPy batch),2,0.024180200009141117,True
+BLAS threads (NumPy batch),4,0.018310600018594414,True
+BLAS threads (NumPy batch),8,0.018002500000875443,True
+BLAS threads (NumPy batch),12,0.016560799966100603,True
+BLAS threads (NumPy batch),16,0.016027300036512315,True

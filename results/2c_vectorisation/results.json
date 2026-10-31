@@ -1,0 +1,137 @@
+{
+  "numba_compile": {
+    "first_compile_in_process_s": 0.45794520003255457,
+    "compile_median_s": 0.12088729999959469,
+    "second_call_s": 0.00107709999429062
+  },
+  "numba_cache": {
+    "first_call_from_cache_s": 0.2641253999900073,
+    "second_call_s": 0.0010845999931916595
+  },
+  "main": [
+    {
+      "version": "Pure Python",
+      "key": "python",
+      "median_s": 65.87999440002022,
+      "std_s": 0.28389361311364864,
+      "speedup_vs_python": 1.0,
+      "gflops": 0.09326048151573786
+    },
+    {
+      "version": "NumPy (BLAS)",
+      "key": "numpy",
+      "median_s": 0.026038400013931096,
+      "std_s": 0.00014108649763482927,
+      "speedup_vs_python": 2530.1091605003776,
+      "gflops": 235.9591985956445
+    },
+    {
+      "version": "Numba @njit",
+      "key": "numba",
+      "median_s": 1.4398686999920756,
+      "std_s": 0.0037461645552177214,
+      "speedup_vs_python": 45.75416800183433,
+      "gflops": 4.267055739203036
+    },
+    {
+      "version": "Numba parallel",
+      "key": "numba_parallel",
+      "median_s": 0.10580560000380501,
+      "std_s": 0.011891280180174687,
+      "speedup_vs_python": 622.6513000980196,
+      "gflops": 58.06876006354151
+    },
+    {
+      "version": "Numba parallel+fastmath",
+      "key": "numba_fastmath",
+      "median_s": 0.019011199998203665,
+      "std_s": 0.0023695148741716123,
+      "speedup_vs_python": 3465.3254085089375,
+      "gflops": 323.1779162062645
+    }
+  ],
+  "main_size": {
+    "queries": 200,
+    "docs": 20000
+  },
+  "memory_layout": [
+    {
+      "operation": "row loop (Numba)",
+      "good": "C order (rows contiguous)",
+      "good_ms": 7.1357000269927084,
+      "bad": "F order (rows strided)",
+      "bad_ms": 7.453300000634044,
+      "ratio": 1.04450859375253
+    },
+    {
+      "operation": "GEMM Q @ X.T",
+      "good": "contiguous X[:, :384] copy",
+      "good_ms": 3.5576000227592885,
+      "bad": "strided view X[:, ::2]",
+      "bad_ms": 8.138799981679767,
+      "ratio": 2.287722040030594
+    },
+    {
+      "operation": "select 2,000 rows",
+      "good": "slice X[:2000] (view)",
+      "good_ms": 0.000200001522898674,
+      "bad": "fancy index X[idx] (copy)",
+      "bad_ms": 0.6024999893270433,
+      "ratio": 3012.4770081490105
+    },
+    {
+      "operation": "normalise rows",
+      "good": "in place: Y /= norms",
+      "good_ms": 8.857599983457476,
+      "bad": "new array: Y / norms",
+      "bad_ms": 13.391699991188943,
+      "ratio": 1.5118880979271347
+    },
+    {
+      "operation": "GEMM 200 x 20K x 768",
+      "good": "float32",
+      "good_ms": 5.3999999654479325,
+      "bad": "float64",
+      "bad_ms": 11.167799995746464,
+      "ratio": 2.0681111235562923
+    },
+    {
+      "operation": "scores Q . X",
+      "good": "Q @ X.T (BLAS)",
+      "good_ms": 5.29980001738295,
+      "bad": "einsum('qd,nd->qn') no optimize",
+      "bad_ms": 399.5507000363432,
+      "ratio": 75.38976918484596
+    },
+    {
+      "operation": "re-rank 200 x 100 cands",
+      "good": "Numba, reads rows in place",
+      "good_ms": 0.221800000872463,
+      "bad": "einsum('qd,qcd->qc') on gathered copy",
+      "bad_ms": 8.188500010874122,
+      "ratio": 36.918394854211854
+    }
+  ],
+  "normalise_peak_mb": {
+    "in_place": 58.62419128417969,
+    "new_array": 117.21806335449219
+  },
+  "gathered_candidates_mb": 58.59375,
+  "captions": {
+    "fig4d_memory_layout": "Figure 4d: How the data is laid out and touched matters as much as the arithmetic: a fancy-index copy is 3,012x slower than a slice view, an einsum that bypasses BLAS 75x slower than Q @ X.T, gathering candidate rows before re-ranking 37x slower than reading them in place, and float64 2.1x slower than float32; row-major vs column-major access costs only 1.0x here because the 59 MB corpus fits in the 96 MB L3 cache.",
+    "fig4_vectorisation": "Figure 4: Compiling the same loops with Numba gives 46x over pure Python, prange 623x and prange+fastmath (SIMD) 3,465x, versus 2,530x for NumPy/BLAS. NumPy loses whenever its single-threaded normalisation temporaries dominate: for one query over 20,000 docs it needs 20.1 ms versus 0.30 ms for the fused Numba kernel; for a 200-query batch Numba fastmath is faster (Numba 20.2 ms vs NumPy 26.5 ms)."
+  },
+  "batch_200_largest_ms": {
+    "numpy": 26.463499991223216,
+    "numpy_1thread": 43.720100016798824,
+    "numba_parallel": 107.1286000078544,
+    "numba_fastmath": 20.18659998429939
+  },
+  "single_query_largest_ms": {
+    "numpy": 20.09060001000762,
+    "numpy_1thread": 20.45630000066012,
+    "numba": 14.244800026062876,
+    "numba_parallel": 1.1413000174798071,
+    "numba_fastmath": 0.29739999445155263
+  }
+}

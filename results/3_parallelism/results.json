@@ -1,0 +1,205 @@
+{
+  "gil_sequential_s": 1.914958800014574,
+  "gil_workload": {
+    "queries": 48,
+    "docs": 1000
+  },
+  "pickling": {
+    "workers": 8,
+    "corpus_pickle_mb": 6.596528053283691,
+    "bad_s": 0.7302739999722689,
+    "good_warm_s": 0.2659302999963984,
+    "good_cold_s": 2.042774800036568,
+    "bad_total_pickled_mb": 316.6333465576172
+  },
+  "switch_interval_s": 0.005,
+  "phase2_reference": {
+    "median_s": 0.0332355999853462,
+    "correct": true
+  },
+  "batching": {
+    "gemv_loop_1thread_ms": 106.24990001088008,
+    "gemv_loop_allthreads_ms": 37.1566999820061,
+    "gemm_batch_1thread_ms": 33.48279994679615,
+    "gemm_batch_best_ms": 16.027300036512315
+  },
+  "blas_serial_share": [
+    {
+      "blas_threads": 1,
+      "matmul_ms": 22.760149964597076,
+      "topk_ms": 10.110550007084385,
+      "other_ms": 0.09610000415705144,
+      "serial_share": 0.3096039051021612
+    },
+    {
+      "blas_threads": "all",
+      "matmul_ms": 4.318899998907,
+      "topk_ms": 10.238099959678948,
+      "other_ms": 0.08605001494288445,
+      "serial_share": 0.7050546158952848
+    }
+  ],
+  "race_demo": [
+    {
+      "version": "shared histogram (race)",
+      "expected_total": 4000000,
+      "totals_in_5_runs": [
+        1583896,
+        1592098,
+        1567072,
+        1579562,
+        1417306
+      ],
+      "lost_updates_max": 2582694,
+      "correct": false,
+      "ms": 17.034400021657348
+    },
+    {
+      "version": "private rows, combine once",
+      "expected_total": 4000000,
+      "totals_in_5_runs": [
+        4000000,
+        4000000,
+        4000000,
+        4000000,
+        4000000
+      ],
+      "lost_updates_max": 0,
+      "correct": true,
+      "ms": 0.33760000951588154
+    }
+  ],
+  "granularity_workers": 8,
+  "captions": {
+    "fig5c_granularity": "Figure 5c: Granularity is the master dial: with 8 workers the 200 queries run fastest as tasks of 25 queries (10.0 ms, effective serial fraction f = 0.20); one task with all queries leaves the other workers idle (33.5 ms), and tiny tasks drown in overhead - 2-query tasks (46.6 ms) are even slower than 1-query tasks (17.6 ms) because BLAS switches from a matrix-vector to a matrix-matrix product that first packs the whole corpus.",
+    "fig5d_dask_timeline": "Figure 5d: Dask's task stream for one sharded search: the 8 shard tasks run side by side on 8 threads (6.7 ms each) and the single merge - the graph's narrow waist - takes 0.26 ms, only 4% of the 7.5 ms wall time, so a flat merge is enough at this scale.",
+    "fig5_parallel_scaling": "Figure 5: With pure Python, processes reach 8.5x (Amdahl p=0.95) while threads stay at 1.0x because of the GIL. For the vectorised search, BLAS threads stop at 2.1x (p=0.55) because the top-k selection after the matmul is single-threaded, whereas strategies that split the work into query chunks or shards also parallelise the selection (ProcessPool+shared memory p=0.74) and the fused Numba kernel has no serial part at all (p=0.98)."
+  },
+  "asyncio_sleep_resolution": {
+    "requested_ms": 20.0,
+    "median_ms": 29.514699999708682
+  },
+  "ray_init_s": 12.090127500006929,
+  "df_vocabulary": 174660,
+  "df_words": 3560445,
+  "amdahl_p": {
+    "BLAS threads (NumPy batch)": 0.5537866060761482,
+    "Dask delayed shards (threads)": 0.7905421926313075,
+    "Numba prange (fused)": 0.9776802691729367,
+    "ProcessPool + shared memory": 0.7432176553353701,
+    "ThreadPool + NumPy (1 BLAS thread/worker)": 0.7429026057148758,
+    "ProcessPool (pure Python)": 0.948600592909371,
+    "ThreadPool (pure Python)": 2.0278107546674147e-08
+  },
+  "summary": [
+    {
+      "strategy": "Phase-2 best: NumPy batch (1 BLAS thread)",
+      "key": "numpy",
+      "config": "1 thread",
+      "median_s": 0.0332355999853462,
+      "correct": true,
+      "speedup_vs_naive": 4644.406539014822,
+      "speedup_vs_phase2": 1.0
+    },
+    {
+      "strategy": "BLAS threads (NumPy batch)",
+      "key": "numpy",
+      "config": "16 workers",
+      "median_s": 0.016027300036512315,
+      "correct": true,
+      "speedup_vs_naive": 9631.044377304415,
+      "speedup_vs_phase2": 2.073686766306932
+    },
+    {
+      "strategy": "Numba prange (fused)",
+      "key": "numba_parallel",
+      "config": "16 workers",
+      "median_s": 0.019697599986102432,
+      "correct": true,
+      "speedup_vs_naive": 7836.469316512197,
+      "speedup_vs_phase2": 1.68729185326108
+    },
+    {
+      "strategy": "ThreadPool + NumPy (1 BLAS thread/worker)",
+      "key": "threadpool",
+      "config": "8 workers",
+      "median_s": 0.010086400026921183,
+      "correct": true,
+      "speedup_vs_naive": 15303.739440040848,
+      "speedup_vs_phase2": 3.295090408534112
+    },
+    {
+      "strategy": "ProcessPool + shared memory",
+      "key": "processpool",
+      "config": "12 workers",
+      "median_s": 0.010742200014647096,
+      "correct": true,
+      "speedup_vs_naive": 14369.462278634906,
+      "speedup_vs_phase2": 3.093928612391235
+    },
+    {
+      "strategy": "Dask delayed shards (threads)",
+      "key": "dask",
+      "config": "8 workers",
+      "median_s": 0.00887620000867173,
+      "correct": true,
+      "speedup_vs_naive": 17390.28387702158,
+      "speedup_vs_phase2": 3.7443500544012305
+    },
+    {
+      "strategy": "ProcessPool + memmap file",
+      "key": "processpool",
+      "config": "8 workers",
+      "median_s": 0.009728700038976967,
+      "correct": true,
+      "speedup_vs_naive": 15866.419694470778,
+      "speedup_vs_phase2": 3.416242648266615
+    },
+    {
+      "strategy": "Ray tasks (ray.put shards)",
+      "key": "ray",
+      "config": "8 shards",
+      "median_s": 0.01182920002611354,
+      "correct": true,
+      "speedup_vs_naive": 13049.034386033401,
+      "speedup_vs_phase2": 2.809623635746879
+    },
+    {
+      "strategy": "Ray actors (stateful shards)",
+      "key": "ray",
+      "config": "8 shards",
+      "median_s": 0.010590099962428212,
+      "correct": true,
+      "speedup_vs_naive": 14575.84332987066,
+      "speedup_vs_phase2": 3.138365086567661
+    },
+    {
+      "strategy": "Ray tasks + ray.wait (merge as they arrive)",
+      "key": "ray",
+      "config": "8 shards",
+      "median_s": 0.011604800005443394,
+      "correct": true,
+      "speedup_vs_naive": 13301.361318387068,
+      "speedup_vs_phase2": 2.863952844491639
+    },
+    {
+      "strategy": "Ray tasks, 30% of attempts fail, max_retries=10",
+      "key": "ray",
+      "config": "8 shards",
+      "median_s": 2.009033599984832,
+      "correct": true,
+      "speedup_vs_naive": 76.83278064696786,
+      "speedup_vs_phase2": 0.01654307821710753
+    },
+    {
+      "strategy": "asyncio batched (20 ms API latency, 100 q)",
+      "key": "asyncio",
+      "config": "gather + 1 GEMM",
+      "median_s": 0.04062529996735975,
+      "correct": true,
+      "speedup_vs_naive": 3799.5938005145185,
+      "speedup_vs_phase2": 0.8181010358581775
+    }
+  ],
+  "naive_full_s": 154.3596379000228
+}

@@ -1,0 +1,14 @@
+version,key,seconds,speedup_vs_naive
+Naive Python (baseline),python,154.3596379000228,1.0
+Python: norms once,python,66.4375,2.323381191345592
+Python: sum(map) + heapq,python,40.39468649995979,3.8212857005382737
+NumPy batch (1 BLAS thread),numpy,0.0332355999853462,4644.406539014822
+Numba prange (fused),numba_parallel,0.019697599986102432,7836.469316512197
+BLAS threads (NumPy batch),numpy,0.016027300036512315,9631.044377304415
+Ray tasks (ray.put shards),ray,0.01182920002611354,13049.034386033401
+ProcessPool + shared memory,processpool,0.010742200014647096,14369.462278634906
+Ray actors (stateful shards),ray,0.010590099962428212,14575.84332987066
+ThreadPool + NumPy,threadpool,0.010086400026921183,15303.739440040848
+Dask delayed shards (threads),dask,0.00887620000867173,17390.28387702158
+Exact 768-d + parallel top-k,numba,0.005702950031263754,27066.62991150516
+Final: SVD-128 + re-rank(100) + parallel top-k,final,0.0038892499869689345,39688.79306221252

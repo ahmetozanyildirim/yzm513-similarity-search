@@ -1,0 +1,19 @@
+function,line,hits,time_s,pct_of_function,code
+cosine_similarity_python,20,200000,0.0265492,0.03544630874282046,dot = 0.0
+cosine_similarity_python,21,200000,0.022126899999999998,0.029542017421297594,norm_a = 0.0
+cosine_similarity_python,22,200000,0.0198092,0.026447614961967934,norm_b = 0.0
+cosine_similarity_python,23,153800000,18.4898955,24.686188077813522,for i in range(len(a)):
+cosine_similarity_python,24,153600000,18.2330126,24.34321915279314,dot += a[i] * b[i]
+cosine_similarity_python,25,153600000,18.3956669,24.56038179935678,norm_a += a[i] * a[i]
+cosine_similarity_python,26,153600000,19.6212862,26.19672790805156,norm_b += b[i] * b[i]
+cosine_similarity_python,27,200000,0.0253934,0.033903179622359135,if norm_a == 0.0 or norm_b == 0.0:
+cosine_similarity_python,29,200000,0.0660196,0.08814394123655364,return dot / (math.sqrt(norm_a) * math.sqrt(norm_b))
+search_naive,38,1,5e-07,5.062494177055916e-07,results = []
+search_naive,39,11,4.7e-06,4.758744526432562e-06,for query in queries:
+search_naive,40,10,0.0051706,0.0052352264783770645,scores = []
+search_naive,41,200010,0.030749099999999998,0.031133427939942015,"for d_idx, doc in enumerate(corpus):"
+search_naive,42,200000,98.61896279999999,99.85158498445881,"sim = cosine_similarity_python(query, doc)"
+search_naive,43,200000,0.040013799999999995,0.040513925900376,"scores.append((d_idx, sim))"
+search_naive,44,10,0.0706226,0.07150530025370984,"scores.sort(key=lambda x: x[1], reverse=True)"
+search_naive,45,10,2.1099999999999998e-05,2.1363725427175966e-05,results.append(scores[:k])
+search_naive,46,1,5e-07,5.062494177055916e-07,return results

@@ -1,0 +1,6 @@
+question,our engine (SVD-128 + re-rank(100) + parallel top-k),same search at 100M docs
+Split,"matmul: BLAS splits the GEMM into cache-sized blocks; top-k and re-rank: the 200 query rows over the Numba prange threads; the corpus stays whole (61 MB, fits L3)","by document: 32-128 shards of the corpus, one per machine"
+Assign,static: BLAS and OpenMP give each thread an equal block (every query costs the same),one task per shard (Dask / Ray scheduler); stateful actors keep their shard loaded
+Move,nothing: shared memory; the corpus is read in place (no pickling),"3.1 KB query out, 120 B of (id, score) back per shard"
+Wait,one barrier at the end of prange; the whole batch of 200 queries takes 3.89 ms,"the slowest shard, then a merge of shards x k results (tree merge when the fan-in is large)"
+Fail,"a crash restarts the query (milliseconds, nothing to save)","retry the shard task: read-only and pure, so running it twice is safe (measured: 30% failed attempts, still exact, 2009 ms)"

@@ -1,0 +1,10 @@
+strategy,workers,median_s,correct
+Dask delayed shards (threads),1.0,0.03485070000169799,True
+Dask delayed shards (threads),2.0,0.01897939998889342,True
+Dask delayed shards (threads),4.0,0.011948400002438575,True
+Dask delayed shards (threads),8.0,0.00887620000867173,True
+Dask delayed shards (threads),16.0,0.010732900002039969,True
+dask.array matmul (chunk=20000),,0.0482213000068441,True
+dask.array matmul (chunk=5000),,0.05824760004179552,True
+dask.array matmul (chunk=2500),,0.05218099994817749,True
+Dask delayed shards (processes),8.0,1.0358501999871805,True

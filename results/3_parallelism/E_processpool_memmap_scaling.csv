@@ -1,0 +1,7 @@
+strategy,workers,median_s,correct
+ProcessPool + memmap file,1,0.034256599959917367,True
+ProcessPool + memmap file,2,0.01964919996680692,True
+ProcessPool + memmap file,4,0.012696399993728846,True
+ProcessPool + memmap file,8,0.009728700038976967,True
+ProcessPool + memmap file,12,0.01079500000923872,True
+ProcessPool + memmap file,16,0.011164099967572838,True

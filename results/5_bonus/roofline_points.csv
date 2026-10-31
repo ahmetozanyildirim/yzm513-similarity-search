@@ -1,0 +1,6 @@
+kernel,key,gflops,ai
+"GEMM batch (BLAS, all threads)",numpy,1108.9251897500517,78.7143325680551
+GEMV per query (BLAS),python,203.5232308922168,0.5
+Final system (whole search),final,271.4083513673353,12.015164771070284
+"GEMM batch (BLAS, 1 thread)",,261.3322667953283,78.7143325680551
+Numba fused (prange),,326.79460403422297,0.5

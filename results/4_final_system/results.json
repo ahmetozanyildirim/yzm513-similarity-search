@@ -1,0 +1,234 @@
+{
+  "n_candidates": 100,
+  "final_name": "SVD-128 + re-rank(100) + parallel top-k",
+  "final_config": {
+    "n_components": 128,
+    "n_candidates": 100,
+    "reducer": "truncated_svd",
+    "topk": "numba"
+  },
+  "stage_profile": [
+    {
+      "config": "exact 768-d + argpartition",
+      "total_ms": 15.548900002613664,
+      "correct": true,
+      "normalise_ms": 0.08815000182949007,
+      "matmul_ms": 4.282799985958263,
+      "topk_ms": 10.23200000054203,
+      "normalise_project_ms": 0.0,
+      "topk_candidates_ms": 0.0,
+      "rerank_ms": 0.0
+    },
+    {
+      "config": "exact 768-d + parallel top-k",
+      "total_ms": 5.357549991458654,
+      "correct": true,
+      "normalise_ms": 0.0948999950196594,
+      "matmul_ms": 4.321749962400645,
+      "topk_ms": 0.2373000024817884,
+      "normalise_project_ms": 0.0,
+      "topk_candidates_ms": 0.0,
+      "rerank_ms": 0.0
+    },
+    {
+      "config": "SVD-128 + re-rank(100) + argpartition",
+      "total_ms": 21.931300027063116,
+      "correct": true,
+      "normalise_ms": 0.0,
+      "matmul_ms": 1.8632500141393393,
+      "topk_ms": 0.0,
+      "normalise_project_ms": 0.358150020474568,
+      "topk_candidates_ms": 10.119149985257536,
+      "rerank_ms": 8.839600021019578
+    },
+    {
+      "config": "SVD-128 + re-rank(100) + parallel top-k",
+      "total_ms": 3.6741000367328525,
+      "correct": true,
+      "normalise_ms": 0.0,
+      "matmul_ms": 1.8185500230174512,
+      "topk_ms": 0.0,
+      "normalise_project_ms": 0.20235002739354968,
+      "topk_candidates_ms": 0.5821000377181917,
+      "rerank_ms": 0.45224998029880226
+    }
+  ],
+  "correctness_all_ok": true,
+  "scale_inputs": {
+    "scan_gbps": 58.8838516741638,
+    "ram_gb": 33.456869376,
+    "docs_per_s_measured": 9.095043201455207,
+    "assumed_serial_fraction_f": 0.02,
+    "assumed_docs_per_s": 1000,
+    "assumed_mtbf_days": 1000
+  },
+  "slopes": [
+    {
+      "version": "naive",
+      "slope_5K-20K": 0.9993702986417925,
+      "slope_20K-200K": NaN,
+      "ms_per_1k_docs_at_largest_real": 7717.9818950011395
+    },
+    {
+      "version": "numba_fused",
+      "slope_5K-20K": 1.018026067511744,
+      "slope_20K-200K": 1.5602130390428253,
+      "ms_per_1k_docs_at_largest_real": 0.9148174998699687
+    },
+    {
+      "version": "exact_blas",
+      "slope_5K-20K": 0.9407110605216328,
+      "slope_20K-200K": 0.9820319874732649,
+      "ms_per_1k_docs_at_largest_real": 0.7863849998102523
+    },
+    {
+      "version": "exact_ptopk",
+      "slope_5K-20K": 0.8498310289435422,
+      "slope_20K-200K": 0.9516624890636592,
+      "ms_per_1k_docs_at_largest_real": 0.2851475015631877
+    },
+    {
+      "version": "final",
+      "slope_5K-20K": 0.5391486170860964,
+      "slope_20K-200K": 0.8450747347836582,
+      "ms_per_1k_docs_at_largest_real": 0.19446249934844673
+    }
+  ],
+  "all_versions": [
+    {
+      "version": "Naive Python (baseline)",
+      "key": "python",
+      "seconds": 154.3596379000228,
+      "speedup_vs_naive": 1.0
+    },
+    {
+      "version": "Python: norms once",
+      "key": "python",
+      "seconds": 66.4375,
+      "speedup_vs_naive": 2.323381191345592
+    },
+    {
+      "version": "Python: sum(map) + heapq",
+      "key": "python",
+      "seconds": 40.39468649995979,
+      "speedup_vs_naive": 3.8212857005382737
+    },
+    {
+      "version": "NumPy batch (1 BLAS thread)",
+      "key": "numpy",
+      "seconds": 0.0332355999853462,
+      "speedup_vs_naive": 4644.406539014822
+    },
+    {
+      "version": "Numba prange (fused)",
+      "key": "numba_parallel",
+      "seconds": 0.019697599986102432,
+      "speedup_vs_naive": 7836.469316512197
+    },
+    {
+      "version": "BLAS threads (NumPy batch)",
+      "key": "numpy",
+      "seconds": 0.016027300036512315,
+      "speedup_vs_naive": 9631.044377304415
+    },
+    {
+      "version": "Ray tasks (ray.put shards)",
+      "key": "ray",
+      "seconds": 0.01182920002611354,
+      "speedup_vs_naive": 13049.034386033401
+    },
+    {
+      "version": "ProcessPool + shared memory",
+      "key": "processpool",
+      "seconds": 0.010742200014647096,
+      "speedup_vs_naive": 14369.462278634906
+    },
+    {
+      "version": "Ray actors (stateful shards)",
+      "key": "ray",
+      "seconds": 0.010590099962428212,
+      "speedup_vs_naive": 14575.84332987066
+    },
+    {
+      "version": "ThreadPool + NumPy",
+      "key": "threadpool",
+      "seconds": 0.010086400026921183,
+      "speedup_vs_naive": 15303.739440040848
+    },
+    {
+      "version": "Dask delayed shards (threads)",
+      "key": "dask",
+      "seconds": 0.00887620000867173,
+      "speedup_vs_naive": 17390.28387702158
+    },
+    {
+      "version": "Exact 768-d + parallel top-k",
+      "key": "numba",
+      "seconds": 0.005702950031263754,
+      "speedup_vs_naive": 27066.62991150516
+    },
+    {
+      "version": "Final: SVD-128 + re-rank(100) + parallel top-k",
+      "key": "final",
+      "seconds": 0.0038892499869689345,
+      "speedup_vs_naive": 39688.79306221252
+    }
+  ],
+  "final_batch_ms": 3.8892499869689345,
+  "final_latency_ms": 0.21015002857893705,
+  "thread_contention": [
+    {
+      "config": "exact 768-d + argpartition",
+      "total_ms": 15.434600005391985,
+      "matmul_ms": 4.312350007239729,
+      "omp_idle_threads": "spinning (default)"
+    },
+    {
+      "config": "exact 768-d + parallel top-k",
+      "total_ms": 34.271050011739135,
+      "matmul_ms": 34.128000028431416,
+      "omp_idle_threads": "spinning (default)"
+    },
+    {
+      "config": "SVD-128 + re-rank(100) + argpartition",
+      "total_ms": 21.821350004756823,
+      "matmul_ms": 1.779000012902543,
+      "omp_idle_threads": "spinning (default)"
+    },
+    {
+      "config": "SVD-128 + re-rank(100) + parallel top-k",
+      "total_ms": 7.0051500224508345,
+      "matmul_ms": 5.308949999744073,
+      "omp_idle_threads": "spinning (default)"
+    },
+    {
+      "config": "exact 768-d + argpartition",
+      "total_ms": 15.386000013677403,
+      "matmul_ms": 4.273400001693517,
+      "omp_idle_threads": "sleeping (PASSIVE)"
+    },
+    {
+      "config": "exact 768-d + parallel top-k",
+      "total_ms": 5.383999989135191,
+      "matmul_ms": 4.44265000987798,
+      "omp_idle_threads": "sleeping (PASSIVE)"
+    },
+    {
+      "config": "SVD-128 + re-rank(100) + argpartition",
+      "total_ms": 21.73229999607429,
+      "matmul_ms": 1.7452499887440354,
+      "omp_idle_threads": "sleeping (PASSIVE)"
+    },
+    {
+      "config": "SVD-128 + re-rank(100) + parallel top-k",
+      "total_ms": 3.640399983851239,
+      "matmul_ms": 1.7494000494480133,
+      "omp_idle_threads": "sleeping (PASSIVE)"
+    }
+  ],
+  "captions": {
+    "fig6a_final_stage_profile": "Figure 6a: Profiling our own engine shows that single-threaded argpartition takes 66% of the exact batched search (10.23 of 15.55 ms) - the serial fraction of Amdahl's law; a parallel Numba top-k cuts it to 5.36 ms and the final SVD-128 + re-rank(100) + parallel top-k engine needs 3.67 ms. Without OMP_WAIT_POLICY=PASSIVE, Numba's spinning OpenMP threads slow the following BLAS matmul from 4.4 to 34.1 ms (two thread pools competing for the same cores).",
+    "fig6_scaling": "Figure 6: Search time grows at most linearly with corpus size (log-log slope 0.54 for the final engine between 5K and 20K and 0.85 up to 200K synthetic documents - below 1 because fixed per-call costs still matter), while the fused Numba kernel, which re-reads the corpus for every query, slows down x36 for 10x data once the corpus leaves the 96 MB L3 cache; the final engine answers 200 queries over 20K documents in 3.89 ms and a single query in 0.21 ms.",
+    "fig7_all_versions": "Figure 7: From 154 s (naive Python) to 3.89 ms (Final: SVD-128 + re-rank(100) + parallel top-k) on the same 200x20K workload, a 39,689x speed-up; Python-level fixes alone reach at most 4x - the big jump comes from leaving the interpreter (BLAS / Numba)."
+  }
+}

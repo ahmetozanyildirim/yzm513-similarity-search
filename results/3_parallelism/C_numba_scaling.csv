@@ -1,0 +1,7 @@
+strategy,workers,median_s,correct
+Numba prange (fused),1,0.22796330001438037,True
+Numba prange (fused),2,0.1124167000525631,True
+Numba prange (fused),4,0.056334300024900585,True
+Numba prange (fused),8,0.0283946999697946,True
+Numba prange (fused),12,0.023489599989261478,True
+Numba prange (fused),16,0.019697599986102432,True

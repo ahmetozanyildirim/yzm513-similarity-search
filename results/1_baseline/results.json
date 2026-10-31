@@ -1,0 +1,92 @@
+{
+  "baseline": {
+    "n_docs": 20000,
+    "queries": 200,
+    "median_s": 154.3596379000228,
+    "mean_s": 154.37833393999608,
+    "std_s": 0.07344261573148639,
+    "min_s": 154.30590650002705,
+    "max_s": 154.49771939998027,
+    "per_query_s": 0.7717981895001139,
+    "per_pair_us": 38.5899094750057,
+    "raw_times": [
+      154.30590650002705,
+      154.3596379000228,
+      154.3384373000008,
+      154.3899685999495,
+      154.49771939998027
+    ]
+  },
+  "naive_by_n": {
+    "1000": 7.727249199990183,
+    "5000": 38.62361130001955,
+    "10000": 77.59189159999369,
+    "20000": 154.3596379000228
+  },
+  "cprofile": {
+    "profiled_s": 190.0884226000053,
+    "plain_s": 154.3596379000228,
+    "overhead_x": 1.2314645537269509
+  },
+  "python_fixes": [
+    {
+      "version": "naive (baseline)",
+      "median_s": 154.3596379000228,
+      "std_s": 0.07344261573148639,
+      "correct": true,
+      "speedup": 1.0,
+      "workload": "200 queries x 20,000 docs"
+    },
+    {
+      "version": "fix 2: norms once",
+      "median_s": 66.4375,
+      "std_s": 0.03238437979319056,
+      "correct": true,
+      "speedup": 2.323381191345592,
+      "workload": "200 queries x 20,000 docs"
+    },
+    {
+      "version": "fix 1+3: sum(map) + heapq",
+      "median_s": 40.39468649995979,
+      "std_s": 0.29101081399180406,
+      "correct": true,
+      "speedup": 3.8212857005382737,
+      "workload": "200 queries x 20,000 docs"
+    },
+    {
+      "version": "NumPy (1 thread, reference)",
+      "median_s": 0.06559690000722185,
+      "std_s": 0.00011200961695135614,
+      "correct": true,
+      "speedup": 2353.154461308822,
+      "workload": "200 queries x 20,000 docs"
+    }
+  ],
+  "reprofile_top_lines": [
+    {
+      "code": "dot += query[i] * doc[i]",
+      "pct_of_function": 52.442055155915504
+    },
+    {
+      "code": "for i in range(len(query)):",
+      "pct_of_function": 47.06893155580368
+    },
+    {
+      "code": "scores.sort(key=lambda x: x[1], reverse=True)",
+      "pct_of_function": 0.1860206978016456
+    }
+  ],
+  "memory_layout": {
+    "python_vector_kb": 24.0546875,
+    "numpy_vector_kb": 3.0,
+    "ratio": 8.018229166666666,
+    "python_corpus_mb": 469.818115234375,
+    "numpy_corpus_mb": 58.59375
+  },
+  "cprofile_cosine_pct": 98.43978584316464,
+  "cprofile_sort_pct": 0.4126870567982619,
+  "line_top4_pct": 99.786516938015,
+  "captions": {
+    "fig1_profiling": "Figure 1: The naive search spends 98% of its time inside cosine_similarity_python (called once per query-document pair) and only 0.4% sorting; inside the function, the loop header and the three multiply-add lines take 99.8% in near-equal shares - the cost is interpreter overhead per float operation, and two of the three multiply-adds only recompute norms."
+  }
+}

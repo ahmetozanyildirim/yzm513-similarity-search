@@ -1,0 +1,13 @@
+{
+  "roofline": {
+    "peak_gflops": 2138.119353604065,
+    "peak_gflops_1thread": 312.21387873991034,
+    "bw_dram_gbs": 45.32765863510017,
+    "bw_l3_gbs": 463.9716836765259
+  },
+  "hnsw_build_s": 1.6705161000136286,
+  "captions": {
+    "fig8_roofline": "Figure 8 (bonus): Batched GEMM search runs at 1109 GFLOP/s (AI~79 FLOP/B, 52% of the measured 2138 GFLOP/s compute roof) while per-query GEMV reaches only 204 GFLOP/s at AI=0.5, bounded by memory bandwidth (464 GB/s L3, 45 GB/s DRAM): batching queries is what moves the search from memory-bound to compute-bound.",
+    "fig9_ann_tradeoff": "Figure 9 (bonus): HNSW reaches recall@10 0.998 at 0.235 ms per query vs 0.537 ms for exact single-threaded search; our SimHash LSH needs to scan a large fraction of the corpus for high recall in 768 dimensions. At 20K documents exact search is already sub-millisecond, so ANN only pays off at much larger N."
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "power_iteration_check": {
+    "k": 50,
+    "iterations": 100,
+    "sv_rel_err_median": 0.00010980991816782726,
+    "sv_rel_err_max": 0.006064698553976572,
+    "subspace_overlap_min": 0.9932624758196391,
+    "recon_error_ours": 74.71212756919032,
+    "recon_error_optimal": 74.71202856666031,
+    "excess_pct": 0.0001325121695927578
+  },
+  "full_svd": {
+    "median_s": 0.5538710000109859,
+    "min_s": 0.5272931000217795,
+    "max_s": 0.7931652999832295
+  },
+  "k_crossover_truncated_vs_full": 300,
+  "mean_direction": {
+    "mean_norm": 0.5231405451807181,
+    "cos_v1_mean": 0.9976075050532669,
+    "sigma1_energy": 0.2914257535880421
+  },
+  "chosen": {
+    "method": "truncated_svd",
+    "k": 128,
+    "n_candidates": 100
+  },
+  "time_k100": {
+    "numpy_svd": 0.5538710000109859,
+    "pca": 0.16741649998584762,
+    "power_iteration": 1.843656099983491,
+    "truncated_svd": 0.2469969000085257
+  },
+  "rel_error": {
+    "power_iteration": 0.4204342642195614,
+    "numpy_svd": 0.420428469451518,
+    "truncated_svd": 0.4211966527738664,
+    "pca": 0.4198293139592657,
+    "optimal (Eckart-Young)": 0.42042846945151796
+  },
+  "recall_k128": {
+    "recall_plain": 0.795,
+    "recall_rerank100": 1.0,
+    "search_plain_ms": 13.447800010908395,
+    "search_rerank_ms": 22.03880000161007,
+    "exact_768_ms": 15.38639998761937
+  },
+  "reducer_search": [
+    {
+      "method": "truncated_svd",
+      "fit_s": 0.3178180999821052,
+      "recall@10": 1.0,
+      "same_as_baseline": true,
+      "wrong_ranks": 0
+    },
+    {
+      "method": "power_iteration",
+      "fit_s": 2.3671647000010125,
+      "recall@10": 1.0,
+      "same_as_baseline": true,
+      "wrong_ranks": 0
+    },
+    {
+      "method": "pca",
+      "fit_s": 0.10754620004445314,
+      "recall@10": 0.9805000000000001,
+      "same_as_baseline": false,
+      "wrong_ranks": 92
+    }
+  ],
+  "pca_solver": "covariance_eigh",
+  "captions": {
+    "fig3_dim_reduction": "Figure 3: Truncated (randomised) SVD reaches the optimal Eckart-Young error at k=100 (0.421 relative) in 0.25 s versus 0.55 s for the full SVD and 1.84 s for our power iteration; the full SVD overtakes it from k~300 on; at k=128, re-ranking 100 reduced-space candidates in full 768-d recovers 100.0% of the exact top-10 (only 80% without re-ranking), whereas PCA - fastest and lowest-error - reaches only 98.1% because centring changes the cosine geometry the search relies on."
+  }
+}

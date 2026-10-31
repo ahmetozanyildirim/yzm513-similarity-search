@@ -1,0 +1,4 @@
+method,seconds,relative_error
+sklearn TruncatedSVD (in memory),0.2908336999826133,0.37626193054618584
+"dask svd_compressed (4 chunks of 5,000 rows)",0.22440559999085963,0.3764542353410644
+optimal (Eckart-Young),,0.37542482995144294

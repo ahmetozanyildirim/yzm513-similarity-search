@@ -1,0 +1,5 @@
+version,median_s,std_s,correct,speedup,workload
+naive (baseline),154.3596379000228,0.07344261573148639,True,1.0,"200 queries x 20,000 docs"
+fix 2: norms once,66.4375,0.03238437979319056,True,2.323381191345592,"200 queries x 20,000 docs"
+fix 1+3: sum(map) + heapq,40.39468649995979,0.29101081399180406,True,3.8212857005382737,"200 queries x 20,000 docs"
+"NumPy (1 thread, reference)",0.06559690000722185,0.00011200961695135614,True,2353.154461308822,"200 queries x 20,000 docs"

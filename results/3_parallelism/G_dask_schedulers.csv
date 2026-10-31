@@ -1,0 +1,5 @@
+scheduler,median_s,startup_s,correct
+synchronous,0.03615090000675991,0.0,True
+threads,0.00893689994700253,0.0,True
+processes,1.0441074999980628,0.0,True
+"distributed (LocalCluster, shards scattered once)",0.037962500005960464,1.638860900013242,True

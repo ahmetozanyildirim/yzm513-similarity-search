@@ -1,0 +1,17 @@
+Sat Oct 31 02:45:56 2026    C:\Users\rhyme\Desktop\Demo Denemeler\hpc-for-ai-course\project1-similarity-search\odev\results\1_baseline\cprofile.prof
+
+         24000402 function calls in 190.088 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  4000000  187.122    0.000  187.866    0.000 C:\Users\rhyme\Desktop\Demo Denemeler\hpc-for-ai-course\project1-similarity-search\odev\src\hpss\naive.py:18(cosine_similarity_python)
+        1    1.191    1.191  190.088  190.088 C:\Users\rhyme\Desktop\Demo Denemeler\hpc-for-ai-course\project1-similarity-search\odev\src\hpss\naive.py:32(search_naive)
+      200    0.604    0.003    0.784    0.004 {method 'sort' of 'list' objects}
+  8000000    0.530    0.000    0.530    0.000 {built-in method math.sqrt}
+  4000200    0.247    0.000    0.247    0.000 {method 'append' of 'list' objects}
+  4000000    0.213    0.000    0.213    0.000 {built-in method builtins.len}
+  4000000    0.180    0.000    0.180    0.000 C:\Users\rhyme\Desktop\Demo Denemeler\hpc-for-ai-course\project1-similarity-search\odev\src\hpss\naive.py:44(<lambda>)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+

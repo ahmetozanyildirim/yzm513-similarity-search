@@ -1,0 +1,84 @@
+{
+  "tfidf": {
+    "vocab": 10000,
+    "nnz": 1832911,
+    "density": 0.009164555,
+    "nnz_per_doc": 91.64555,
+    "nnz_per_query": 8.045
+  },
+  "density_crossover": 0.2,
+  "quality": {
+    "hit@1": {
+      "TF-IDF (sparse)": 0.685,
+      "Embedding (dense, 768-d)": 0.74
+    },
+    "hit@10": {
+      "TF-IDF (sparse)": 0.9,
+      "Embedding (dense, 768-d)": 0.9
+    }
+  },
+  "paraphrase_examples": [
+    {
+      "query": "speeding up text generation of large language models",
+      "tfidf_terms": [
+        "generation",
+        "language",
+        "large",
+        "models",
+        "speeding",
+        "text"
+      ],
+      "tfidf": [
+        "Evaluation of Baseline Methods for IDD-based SSD External Memory Search",
+        "Better Prompt Compression Without Multi-Layer Perceptrons",
+        "Turning LLM Activations Quantization-Friendly"
+      ],
+      "embedding": [
+        "Mamba Drafters for Speculative Decoding",
+        "Optimal Stopping vs Best-of-$N$ for Inference Time Optimization",
+        "Reflection-Window Decoding: Text Generation with Selective Refinement"
+      ]
+    },
+    {
+      "query": "making neural networks small enough to run on a phone",
+      "tfidf_terms": [
+        "making",
+        "networks",
+        "neural",
+        "phone",
+        "run",
+        "small"
+      ],
+      "tfidf": [
+        "Temporal social network modeling of mobile connectivity data with graph neural networks",
+        "Autonomous AI Surveillance: Multimodal Deep Learning for Cognitive and Behavioral Monitoring",
+        "Auto Review: Second Stage Error Detection for Highly Accurate Information Extraction from Phone Conversations"
+      ],
+      "embedding": [
+        "Optimizing Deep Neural Networks using Safety-Guided Self Compression",
+        "Kilobyte Models: Neural Networks as a Seed and a Quantized Latent",
+        "AI-ANNE: (A) (N)eural (N)et for (E)xploration: Transferring Deep Learning Models onto Microcontrollers and Embedded Systems"
+      ]
+    }
+  ],
+  "memory_20k": {
+    "n_docs": 20000.0,
+    "tfidf_csr_mb": 14.060298919677734,
+    "tfidf_dense_mb": 762.939453125,
+    "embedding_dense_mb": 58.59375,
+    "dense_tfidf_vs_csr": 54.26196537381204
+  },
+  "times_ms_largest_n": {
+    "sparse.sparse | ours": 3.6721000215038657,
+    "sparse.sparse | scipy": 26.44500002497807,
+    "sparse.dense | ours": 25.6408000132069,
+    "sparse.dense | scipy": 53.461499977856874,
+    "dense.dense | ours": 1850.6383000058122,
+    "dense.dense | numpy": 295.6306000123732,
+    "embedding 768-d | numpy": 23.221999988891184
+  },
+  "captions": {
+    "fig2_sparse_vs_dense": "Figure 2: For the same TF-IDF numbers, CSR storage needs 54x less memory than a dense array (14 MB vs 763 MB at 20K docs) and our inverted-index sparse-sparse kernel is 81x faster than single-threaded BLAS dense-dense and 6x faster than scoring 768-d embeddings; we still choose dense embeddings (59 MB) because they rank the correct abstract first more often (hit@1 74% vs 68%; hit@10 90% vs 90%) and match paraphrased queries that share no keywords with the documents.",
+    "fig2b_density_crossover": "Figure 2b: Sparse storage only pays off for very sparse data: with single-threaded kernels, BLAS dense-dense overtakes our sparse kernel at about 20% density, while our TF-IDF matrix is 0.92% dense."
+  }
+}

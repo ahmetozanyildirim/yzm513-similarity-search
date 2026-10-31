@@ -1,0 +1,5 @@
+strategy,workers,median_s,correct
+Ray tasks (ray.put shards),8,0.01182920002611354,True
+Ray actors (stateful shards),8,0.010590099962428212,True
+Ray tasks + ray.wait (merge as they arrive),8,0.011604800005443394,True
+"Ray tasks, 30% of attempts fail, max_retries=10",8,2.009033599984832,True

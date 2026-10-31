@@ -1,0 +1,13 @@
+strategy,workers,median_s,correct
+ThreadPool + NumPy (1 BLAS thread/worker),1,0.033831499982625246,True
+ThreadPool + NumPy (oversubscribed),1,0.02989139995770529,True
+ThreadPool + NumPy (1 BLAS thread/worker),2,0.019395899958908558,True
+ThreadPool + NumPy (oversubscribed),2,0.017796700005419552,True
+ThreadPool + NumPy (1 BLAS thread/worker),4,0.012890800018794835,True
+ThreadPool + NumPy (oversubscribed),4,0.018576800008304417,True
+ThreadPool + NumPy (1 BLAS thread/worker),8,0.010086400026921183,True
+ThreadPool + NumPy (oversubscribed),8,0.020456099999137223,True
+ThreadPool + NumPy (1 BLAS thread/worker),12,0.010524500044994056,True
+ThreadPool + NumPy (oversubscribed),12,0.02185389999067411,True
+ThreadPool + NumPy (1 BLAS thread/worker),16,0.012445000000298023,True
+ThreadPool + NumPy (oversubscribed),16,0.08491189999040216,True

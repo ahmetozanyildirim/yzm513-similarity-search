@@ -1,0 +1,9 @@
+quantity,value
+float32 machine epsilon,1.1920928955078125e-07
+typical error of a 768-term dot product (sqrt(d) x eps),3.3036247397782844e-06
+worst-case bound (d x eps),9.1552734375e-05
+tolerance used (spec),1e-05
+measured max |score - baseline|: exact_blas,4.928766114131733e-07
+measured max |score - baseline|: exact_ptopk,4.928766114131733e-07
+measured max |score - baseline|: final,7.728068662782306e-08
+measured max |score - baseline|: numba_fused,1.079686896554577e-07

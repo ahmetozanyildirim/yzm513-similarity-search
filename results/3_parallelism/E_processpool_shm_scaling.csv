@@ -1,0 +1,7 @@
+strategy,workers,median_s,correct
+ProcessPool + shared memory,1,0.03421509999316186,True
+ProcessPool + shared memory,2,0.019765299977734685,True
+ProcessPool + shared memory,4,0.012509900028817356,True
+ProcessPool + shared memory,8,0.012391099997330457,True
+ProcessPool + shared memory,12,0.010742200014647096,True
+ProcessPool + shared memory,16,0.010935299971606582,True

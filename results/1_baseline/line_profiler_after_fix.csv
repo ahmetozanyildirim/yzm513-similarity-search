@@ -1,0 +1,12 @@
+line,hits,pct_of_function,code
+70,153600000,52.442055155915504,dot += query[i] * doc[i]
+69,153800000,47.06893155580368,for i in range(len(query)):
+72,10,0.1860206978016456,"scores.sort(key=lambda x: x[1], reverse=True)"
+71,200000,0.12512175981823165,"scores.append((d_idx, dot))"
+67,200010,0.10361861450127374,"for d_idx, doc in enumerate(corpus_normed):"
+68,200000,0.059800250538532704,dot = 0.0
+66,10,0.01128451218471673,scores = []
+65,11,0.0031102356000579905,for query in normalize_python(queries):
+73,10,5.2755894988325406e-05,results.append(scores[:k])
+74,1,3.1496056709448004e-06,return results
+64,1,1.3123356962270002e-06,results = []

@@ -1,0 +1,9 @@
+engine,partitions,median_s,correct,startup_s,speedup_vs_serial
+serial Counter,1,0.4097814000560902,True,,1.0
+"Dask Bag, threads (GIL)",8,0.6400773000204936,True,,0.6402061126725945
+"Dask Bag, processes (new pool every compute)",8,2.1731794999795966,True,,0.1885630708645731
+"Dask Bag, processes (pool reused)",2,0.92369329999201,True,,0.44363361741352336
+"Dask Bag, processes (pool reused)",8,0.8457082000095397,True,,0.48454230436865553
+"Dask Bag, processes (pool reused)",50,0.680814300023485,True,,0.6018989319730133
+"Dask Bag, processes (pool reused)",500,1.0590387000120245,True,,0.3869371346405353
+Ray tasks + tree merge,16,0.25529409997398034,True,5.63321309996536,1.6051346274663427

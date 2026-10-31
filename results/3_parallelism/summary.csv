@@ -1,0 +1,13 @@
+strategy,key,config,median_s,correct,speedup_vs_naive,speedup_vs_phase2
+Phase-2 best: NumPy batch (1 BLAS thread),numpy,1 thread,0.0332355999853462,True,4644.406539014822,1.0
+BLAS threads (NumPy batch),numpy,16 workers,0.016027300036512315,True,9631.044377304415,2.073686766306932
+Numba prange (fused),numba_parallel,16 workers,0.019697599986102432,True,7836.469316512197,1.68729185326108
+ThreadPool + NumPy (1 BLAS thread/worker),threadpool,8 workers,0.010086400026921183,True,15303.739440040848,3.295090408534112
+ProcessPool + shared memory,processpool,12 workers,0.010742200014647096,True,14369.462278634906,3.093928612391235
+Dask delayed shards (threads),dask,8 workers,0.00887620000867173,True,17390.28387702158,3.7443500544012305
+ProcessPool + memmap file,processpool,8 workers,0.009728700038976967,True,15866.419694470778,3.416242648266615
+Ray tasks (ray.put shards),ray,8 shards,0.01182920002611354,True,13049.034386033401,2.809623635746879
+Ray actors (stateful shards),ray,8 shards,0.010590099962428212,True,14575.84332987066,3.138365086567661
+Ray tasks + ray.wait (merge as they arrive),ray,8 shards,0.011604800005443394,True,13301.361318387068,2.863952844491639
+"Ray tasks, 30% of attempts fail, max_retries=10",ray,8 shards,2.009033599984832,True,76.83278064696786,0.01654307821710753
+"asyncio batched (20 ms API latency, 100 q)",asyncio,gather + 1 GEMM,0.04062529996735975,True,3799.5938005145185,0.8181010358581775

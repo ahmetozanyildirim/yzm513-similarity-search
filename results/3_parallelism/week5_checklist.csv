@@ -1,0 +1,6 @@
+question,our answer,consequence
+1. Does the data fit in RAM?,yes: corpus 59 MB vs 31 GB RAM (and it fits the 96 MB L3),Dask's out-of-core benefit does not apply
+2. Work per task vs overhead?,"granularity sweep: best 25 queries/task (10.0 ms, f=0.20); 1 query/task gives f=0.69; a GEMM call has a fixed packing cost of ~3.2 ms",tasks must carry tens of queries
+3. How much data moves per task?,corpus stored once (shared memory / ray.put / scatter); per task only 75 KB of queries out and 2.9 KB of results back,"move the query, not the data"
+4. Is the serial part small?,no for BLAS-only: top-k is 71% of the time with all BLAS threads; splitting by query chunks or shards parallelises it,fixed in phase 4 with a parallel top-k
+5. Workers x BLAS threads <= cores?,yes: pools use 1 BLAS thread per worker; the oversubscribed ThreadPool variant shows what happens otherwise,D_threadpool_scaling.csv
