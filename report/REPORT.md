@@ -264,21 +264,21 @@ Our inverted-index sparse·sparse kernel is 81x faster than single-threaded BLAS
 ### 3.2 Dimensionality reduction
 
 Four methods on the normalised 20,000 x 768 corpus (`src/hpss/svd.py`): (1) **our block power iteration**, which repeats
-V ← qr(X^T (X V)) until the singular-value estimates change by less than 1e-6 (at most 100 iterations) and never forms
-X^T X; (2) **NumPy full SVD** (LAPACK, ground truth); (3) **scikit-learn TruncatedSVD** (randomised); (4) **scikit-learn PCA**,
+V ← qr(X^T (X V)) until the subspace residual drops below 1e-6 (at most 100 iterations), finishes with a small k x k
+SVD and never forms X^T X; (2) **NumPy full SVD** (LAPACK, ground truth); (3) **scikit-learn TruncatedSVD** (randomised); (4) **scikit-learn PCA**,
 which centres the data first.
 
 ```python
 V, _ = np.linalg.qr(rng.standard_normal((n, k)))   # random orthonormal start, n = 768
 for it in range(max_iter):
-    XV = X @ V                                      # m x k
-    s_new = np.linalg.norm(XV, axis=0)              # singular value estimates
-    if np.max(np.abs(s_new - s_old) / s_new) < tol: break
-    s_old = s_new
-    V, _ = np.linalg.qr(X.T @ XV)                   # amplify the top directions, keep them orthonormal
+    P = X.T @ (X @ V)                               # n x k, never forms X^T X
+    resid = norm(P - V @ (V.T @ P)) / norm(P)       # how far span(V) is from an invariant subspace
+    if resid < tol: break
+    V, _ = np.linalg.qr(P)                          # amplify the top directions, keep them orthonormal
+U0, R = np.linalg.qr(X @ V); u, S, vt = np.linalg.svd(R)   # Rayleigh-Ritz: a small k x k SVD finishes
 ```
 
-**Code:** [`src/hpss/svd.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py) – `power_iteration_svd` ([L21–55](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L21-L55)); all four methods behind one interface, `reduce` ([L62–86](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L62-L86)).
+**Code:** [`src/hpss/svd.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py) – `power_iteration_svd` ([L21–72](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L21-L72)); all four methods behind one interface, `reduce` ([L79–105](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L79-L105)).
 
 **Verification of our implementation** (k = 50, against the full SVD; Figure 3b, Appendix D): singular values within a
 median relative error of 1.1e-4 (max 6.1e-3), subspace overlap ≥ 0.993, reconstruction error only **0.00013%** above the
@@ -335,7 +335,7 @@ use the same algorithm: norms once per row, then one dot product per pair. All r
 | Numba `@njit(parallel=True)`, `prange` over documents | 106 ms | 623x | 58 |
 | Numba parallel + `fastmath=True` | **19.0 ms** | **3,465x** | 323 |
 
-**Code:** [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) – `cosine_matrix_python` ([L28–42](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L28-L42)), `cosine_matrix_numpy` ([L46–49](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L46-L49)), `cosine_matrix_numba` ([L53–76](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L53-L76)), `cosine_matrix_numba_parallel` ([L80–103](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L80-L103)), `cosine_matrix_numba_fastmath` ([L107–130](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L107-L130)). The three Numba versions are the same loops; only the decorator (`@njit`, `parallel=True` + `prange`, `fastmath=True`) changes.
+**Code:** [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) – `cosine_matrix_python` ([L28–42](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L28-L42)), `cosine_matrix_numpy` ([L46–50](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L46-L50)), `cosine_matrix_numba` ([L54–77](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L54-L77)), `cosine_matrix_numba_parallel` ([L81–104](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L81-L104)), `cosine_matrix_numba_fastmath` ([L108–131](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L108-L131)). The three Numba versions are the same loops; only the decorator (`@njit`, `parallel=True` + `prange`, `fastmath=True`) changes.
 
 **Why each step is faster.** `@njit` (46x) removes the interpreter, but the loop still does one scalar multiply-add at a
 time: strict IEEE ordering makes each 768-term sum a chain of dependent additions (~4 GFLOP/s). `prange` adds 13.6x on
@@ -382,7 +382,7 @@ each was measured on the full 200 x 20K workload with 1–16 workers and returne
 |---|---|
 | Pure Python: threads / processes (GIL) | `search_threadpool_python` ([L91–100](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L91-L100)), `make_python_pool` + `search_processpool_python` ([L111–132](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L111-L132)); free-threaded 3.14t: [`scripts/gil_free_threading.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/scripts/gil_free_threading.py) ([L22–78](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/scripts/gil_free_threading.py#L22-L78)) |
 | NumPy, BLAS threads | `search_blas` ([L51–53](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L51-L53)) |
-| Numba `prange` | `search_numba_fused` in [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) ([L188–217](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L188-L217)), `search_numba_threads` ([L60–68](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L60-L68)) |
+| Numba `prange` | `search_numba_fused` in [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) ([L191–222](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L191-L222)), `search_numba_threads` ([L60–68](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L60-L68)) |
 | `ThreadPoolExecutor` + NumPy | `search_threadpool` ([L75–88](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L75-L88)) |
 | `ProcessPoolExecutor` + shared memory / `memmap` | `SharedCorpusPool` ([L151–189](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L151-L189)), `MemmapCorpusPool` ([L196–229](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L196-L229)) |
 | `asyncio` | `serve_serial`, `serve_concurrent`, `serve_batched` ([L313–340](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L313-L340)) |
@@ -529,7 +529,7 @@ class SearchEngine:                       # src/hpss/search.py (abridged)
         return np.take_along_axis(cand, order, axis=1), scores
 ```
 
-**Code:** `SearchEngine` in [`src/hpss/search.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py) ([L53–133](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py#L53-L133)); the parallel top-k `topk_rows` and the in-place re-rank `candidate_scores` in [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) ([L137–181](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L137-L181)).
+**Code:** `SearchEngine` in [`src/hpss/search.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py) ([L59–143](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py#L59-L143)); the parallel top-k `topk_rows` and the in-place re-rank `candidate_scores` in [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) ([L138–184](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L138-L184)).
 
 **Pipeline:** data → embedding (offline) → normalise → TruncatedSVD to 128-d → batched BLAS search → parallel top-100 →
 exact 768-d re-rank → top-10. Re-ranking computes exact 768-d scores for the selected candidates; it cannot recover
@@ -815,5 +815,7 @@ python scripts/validate_independent.py --output results/validation_arm64/new_run
 **Correctness fixes.** Regression tests cover wrong document IDs accepted through copied scores, zero-vector division
 and invalid k bounds. We added a subspace-residual stopping criterion and a small Rayleigh–Ritz SVD finalization to our
 power iteration, testing orthogonality for rank-deficient matrices and close singular values. The Windows measurements
-in §3.2 belong to the previous power-iteration version, not this corrected version. Run tests with
+in §3.2 (times and Figure 3b) were taken with the previous stopping rule (change of the singular-value estimates). On
+this corpus both rules run the full 100 iterations (checked at k = 64 and 128) with the same matrix products per
+iteration. Run tests with
 `python -m pytest tests -q`.

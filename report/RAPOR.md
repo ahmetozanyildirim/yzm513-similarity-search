@@ -266,21 +266,21 @@ karşı %68,5) ve dokümanlarla anahtar kelime paylaşmayan yeniden ifade edilmi
 ### 3.2 Boyut indirgeme
 
 Normalize edilmiş 20.000 x 768 corpus üzerinde dört yöntem (`src/hpss/svd.py`): (1) **kendi blok power iteration'ımız**:
-tekil değer tahminleri 1e-6'dan az değişene kadar (en fazla 100 iterasyon) V ← qr(X^T (X V)) adımını tekrarlıyor ve X^T X'i
-hiç oluşturmuyor; (2) **NumPy tam SVD** (LAPACK, referans sonuç); (3) **scikit-learn TruncatedSVD** (randomize);
+altuzay artığı 1e-6'nın altına inene kadar (en fazla 100 iterasyon) V ← qr(X^T (X V)) adımını tekrarlıyor, küçük bir
+k x k SVD ile bitiriyor ve X^T X'i hiç oluşturmuyor; (2) **NumPy tam SVD** (LAPACK, referans sonuç); (3) **scikit-learn TruncatedSVD** (randomize);
 (4) veriyi önce merkezleyen **scikit-learn PCA**.
 
 ```python
 V, _ = np.linalg.qr(rng.standard_normal((n, k)))   # random orthonormal start, n = 768
 for it in range(max_iter):
-    XV = X @ V                                      # m x k
-    s_new = np.linalg.norm(XV, axis=0)              # singular value estimates
-    if np.max(np.abs(s_new - s_old) / s_new) < tol: break
-    s_old = s_new
-    V, _ = np.linalg.qr(X.T @ XV)                   # amplify the top directions, keep them orthonormal
+    P = X.T @ (X @ V)                               # n x k, never forms X^T X
+    resid = norm(P - V @ (V.T @ P)) / norm(P)       # how far span(V) is from an invariant subspace
+    if resid < tol: break
+    V, _ = np.linalg.qr(P)                          # amplify the top directions, keep them orthonormal
+U0, R = np.linalg.qr(X @ V); u, S, vt = np.linalg.svd(R)   # Rayleigh-Ritz: a small k x k SVD finishes
 ```
 
-**Kod:** [`src/hpss/svd.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py) – `power_iteration_svd` ([L21–55](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L21-L55)); dört yöntem tek bir arayüzün arkasında, `reduce` ([L62–86](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L62-L86)).
+**Kod:** [`src/hpss/svd.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py) – `power_iteration_svd` ([L21–72](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L21-L72)); dört yöntem tek bir arayüzün arkasında, `reduce` ([L79–105](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/svd.py#L79-L105)).
 
 **Uygulamamızın doğrulanması** (k = 50, tam SVD'ye karşı; Şekil 3b, Ek D): tekil değerler medyan 1,1e-4 göreli hata içinde
 (en fazla 6,1e-3), altuzay örtüşmesi ≥ 0,993, yeniden oluşturma hatası optimumun yalnızca **%0,00013** üzerinde.
@@ -334,7 +334,7 @@ algoritmayı kullanıyor: satır başına bir kez norm, sonra çift başına bir
 | Numba `@njit(parallel=True)`, dokümanlar üzerinde `prange` | 106 ms | 623x | 58 |
 | Numba parallel + `fastmath=True` | **19,0 ms** | **3.465x** | 323 |
 
-**Kod:** [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) – `cosine_matrix_python` ([L28–42](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L28-L42)), `cosine_matrix_numpy` ([L46–49](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L46-L49)), `cosine_matrix_numba` ([L53–76](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L53-L76)), `cosine_matrix_numba_parallel` ([L80–103](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L80-L103)), `cosine_matrix_numba_fastmath` ([L107–130](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L107-L130)). Üç Numba sürümü aynı döngüler; yalnızca dekoratör (`@njit`, `parallel=True` + `prange`, `fastmath=True`) değişiyor.
+**Kod:** [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) – `cosine_matrix_python` ([L28–42](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L28-L42)), `cosine_matrix_numpy` ([L46–50](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L46-L50)), `cosine_matrix_numba` ([L54–77](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L54-L77)), `cosine_matrix_numba_parallel` ([L81–104](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L81-L104)), `cosine_matrix_numba_fastmath` ([L108–131](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L108-L131)). Üç Numba sürümü aynı döngüler; yalnızca dekoratör (`@njit`, `parallel=True` + `prange`, `fastmath=True`) değişiyor.
 
 **Her adım neden daha hızlı?** `@njit` (46x) yorumlayıcıyı kaldırıyor, ama döngü hâlâ her seferinde tek bir skaler
 çarpma-toplama yapıyor: katı IEEE sıralaması her 768 terimlik toplamı birbirine bağımlı toplamalardan oluşan bir zincire
@@ -381,7 +381,7 @@ fastmath biraz daha hızlı (20,2 ms'ye karşı 26,5 ms) (b).*
 |---|---|
 | Saf Python: thread / process (GIL) | `search_threadpool_python` ([L91–100](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L91-L100)), `make_python_pool` + `search_processpool_python` ([L111–132](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L111-L132)); free-threaded 3.14t: [`scripts/gil_free_threading.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/scripts/gil_free_threading.py) ([L22–78](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/scripts/gil_free_threading.py#L22-L78)) |
 | NumPy, BLAS thread'leri | `search_blas` ([L51–53](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L51-L53)) |
-| Numba `prange` | `search_numba_fused`, [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) ([L188–217](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L188-L217)), `search_numba_threads` ([L60–68](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L60-L68)) |
+| Numba `prange` | `search_numba_fused`, [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) ([L191–222](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L191-L222)), `search_numba_threads` ([L60–68](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L60-L68)) |
 | `ThreadPoolExecutor` + NumPy | `search_threadpool` ([L75–88](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L75-L88)) |
 | `ProcessPoolExecutor` + paylaşımlı bellek / `memmap` | `SharedCorpusPool` ([L151–189](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L151-L189)), `MemmapCorpusPool` ([L196–229](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L196-L229)) |
 | `asyncio` | `serve_serial`, `serve_concurrent`, `serve_batched` ([L313–340](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/parallel.py#L313-L340)) |
@@ -530,7 +530,7 @@ class SearchEngine:                       # src/hpss/search.py (abridged)
         return np.take_along_axis(cand, order, axis=1), scores
 ```
 
-**Kod:** [`src/hpss/search.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py) içinde `SearchEngine` ([L53–133](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py#L53-L133)); paralel top-k `topk_rows` ve yerinde re-rank `candidate_scores`, [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) içinde ([L137–181](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L137-L181)).
+**Kod:** [`src/hpss/search.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py) içinde `SearchEngine` ([L59–143](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py#L59-L143)); paralel top-k `topk_rows` ve yerinde re-rank `candidate_scores`, [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) içinde ([L138–184](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L138-L184)).
 
 **Hat:** veri → embedding (çevrimdışı) → normalize → TruncatedSVD ile 128-d → batch'li BLAS araması → paralel top-100 →
 kesin 768-d re-rank → top-10. Re-rank, seçilen adayların skorlarını tam 768-d uzayda hesaplıyor; aday havuzuna
@@ -816,5 +816,6 @@ python scripts/validate_independent.py --output results/validation_arm64/new_run
 **Doğruluk düzeltmeleri.** Belge kimliği yanlışken yalnız skor eşitliğiyle başarılı sayılan kontrolleri, sıfır vektörde
 bölmeyi ve geçersiz k sınırlarını regresyon testleriyle düzelttik. Power iteration SVD'ye altuzay artığına dayalı
 durdurma ve küçük bir Rayleigh–Ritz SVD sonlandırması ekledik; rank eksikliği ve yakın tekil değerlerde ortogonalliği
-test ettik. §3.2'deki Windows ölçümleri önceki power-iteration sürümüne aittir; bu düzeltmenin yeni süreleri olarak
-sunulmuyor. Güncel test komutu `python -m pytest tests -q`.
+test ettik. §3.2'deki Windows ölçümleri (süreler ve Şekil 3b) önceki durdurma kuralıyla (tekil değer tahminlerinin
+değişimi) alındı. Bu corpus'ta iki kural da 100 iterasyonun tamamını çalıştırıyor (k = 64 ve 128'de kontrol edildi) ve
+iterasyon başına aynı matris çarpımlarını yapıyor. Güncel test komutu `python -m pytest tests -q`.
