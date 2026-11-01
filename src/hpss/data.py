@@ -198,6 +198,14 @@ def load_embeddings(n=None):
 
 
 def normalize_rows(A):
-    """Unit-length rows, so that cosine similarity becomes a plain dot product."""
+    """Unit rows; a zero vector stays zero, matching the Python cosine baseline."""
     A = np.asarray(A)
-    return A / np.linalg.norm(A, axis=1, keepdims=True)
+    if A.ndim != 2 or not A.shape[0] or not A.shape[1]:
+        raise ValueError("expected a non-empty 2D matrix")
+    if A.dtype.kind not in "fiu" or not np.isfinite(A).all():
+        raise ValueError("matrix values must be finite real numbers")
+    norms = np.linalg.norm(A, axis=1, keepdims=True)
+    if not np.isfinite(norms).all():
+        raise ValueError("row norms must be finite")
+    dtype = np.result_type(A.dtype, np.float32)
+    return np.divide(A, norms, out=np.zeros(A.shape, dtype=dtype), where=norms > 0)

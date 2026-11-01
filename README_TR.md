@@ -9,6 +9,9 @@ Güncel 20.000 arXiv makale özeti (cs.AI / cs.CL / cs.LG, Ocak 2025 – Eylül 
 * Rapor: [`report/RAPOR.md`](report/RAPOR.md) (PDF: `report/RAPOR.pdf`) · İngilizce: [`report/REPORT.md`](report/REPORT.md)
 * Bütün figürler ve ham benchmark verisi: [`results/`](results/) (her proje fazı için bir klasör)
 
+Ortak raporun yazarları Ahmet Ozan Yıldırım ve Mazhar Selvitopi'dir. Yeni ARM64 ölçümleri aynı raporun Ek F bölümündedir.
+Bu ek, 128-d TF-IDF/SVD temsiliyle yapılan 32 karşılaştırmayı içerir; Windows/MPNet sonuçlarıyla hızlanma hesabında karıştırılmaz.
+
 | | |
 |---|---|
 | Veri seti | arXiv API, 20.000 özet (doküman) + 200 makale başlığı (sorgu); doğru cevap başlığın kendi özeti |
@@ -67,3 +70,16 @@ sadece standart kütüphaneyi kullanıyor. Kurulu değilse o kısım bir not yaz
 * `import hpss`, `OMP_WAIT_POLICY=PASSIVE` / `KMP_BLOCKTIME=0` ayarlıyor: boştaki Numba (OpenMP) thread'leri boşta dönüp OpenBLAS'ın
   çekirdeklerini çalmak yerine uyuyor (Faz 4'te ölçüldü; kapatmak için `HPSS_NO_THREAD_FIX=1`).
 * Ölçüm sırasında başka ağır programları kapatın.
+
+## Ek doğrulamayı çalıştırma
+
+```bash
+python -m pytest tests -q
+OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 NUMBA_NUM_THREADS=4 \
+python scripts/validate_independent.py --output results/validation_arm64/new_run
+```
+
+Bu komut kayıtlı JSONL metinlerini kullanır; model indirmez ve eski sonuçları ezmez. Her yapılandırma için 3 ısınma ve
+5 zamanlı tekrar yapar. Çıktı dizini mevcutsa yeni bir dizin seçilmesini ister. Ham süreler, doğruluk ve SHA-256
+kayıtları `summary.json` içinde tutulur. Ana MPNet deneylerinin kayıtlı metinlerden tekrar üretimi için
+`python scripts/prepare_data.py --from-processed` kullanılabilir; bu komut embedding üretir.

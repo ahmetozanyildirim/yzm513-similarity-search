@@ -118,22 +118,50 @@ def to_arrays(list_results):
 def compare_topk(idx, scores, ref_idx, ref_scores, tol=config.TOL):
     """Check a top-k result against the reference (the naive baseline).
 
-    Rank r is correct when its score matches the reference score at rank r
-    within `tol`. Different indices are allowed only when the two documents
-    are tied (their scores differ by < tol) - float32 vs float64 rounding can
-    legitimately swap such near-ties.
+    Both document identity and score must be verified. A different index is
+    accepted only if it occurs elsewhere in this reference row with a tied
+    score. Scores alone cannot prove that an unknown document is a true tie.
+    Duplicate IDs, non-finite values and broadcastable-but-unequal shapes are
+    not valid top-k results.
     """
     idx = np.asarray(idx)
     scores = np.asarray(scores, dtype=np.float64)
+    ref_idx = np.asarray(ref_idx)
+    ref_scores = np.asarray(ref_scores, dtype=np.float64)
+    arrays = (idx, scores, ref_idx, ref_scores)
+    if any(a.ndim != 2 or a.shape != idx.shape for a in arrays) or not idx.size:
+        raise ValueError("top-k arrays must have the same non-empty 2D shape")
+    if idx.dtype.kind not in "iu" or ref_idx.dtype.kind not in "iu":
+        raise ValueError("document indices must be integers")
+    if not np.isfinite(tol) or tol < 0:
+        raise ValueError("tolerance must be finite and non-negative")
+    if not np.isfinite(scores).all() or not np.isfinite(ref_scores).all():
+        raise ValueError("top-k scores must be finite")
     diff = np.abs(scores - ref_scores)
     score_ok = diff <= tol
     same_idx = idx == ref_idx
+    identity_ok = same_idx.copy()
+    for row in range(len(idx)):
+        reference = {int(doc): float(score) for doc, score in zip(ref_idx[row], ref_scores[row])}
+        if len(reference) != ref_idx.shape[1] or np.any(ref_idx[row] < 0):
+            raise ValueError("reference document indices must be unique and non-negative")
+        ids, counts = np.unique(idx[row], return_counts=True)
+        duplicates = set(ids[counts > 1].tolist())
+        for rank, doc in enumerate(idx[row]):
+            if doc < 0 or doc in duplicates:
+                identity_ok[row, rank] = False
+            elif not same_idx[row, rank]:
+                known_score = reference.get(int(doc))
+                identity_ok[row, rank] = (known_score is not None
+                                         and abs(known_score - scores[row, rank]) <= tol
+                                         and abs(known_score - ref_scores[row, rank]) <= tol)
+    valid = score_ok & identity_ok
     return {
-        "all_ok": bool(score_ok.all()),
+        "all_ok": bool(valid.all()),
         "max_abs_score_diff": float(diff.max()),
         "exact_index_match_rate": float(same_idx.mean()),
-        "tie_swaps": int((~same_idx & score_ok).sum()),
-        "violations": int((~score_ok).sum()),
+        "tie_swaps": int((~same_idx & valid).sum()),
+        "violations": int((~valid).sum()),
     }
 
 

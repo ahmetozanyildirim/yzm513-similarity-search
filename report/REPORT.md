@@ -1,7 +1,7 @@
 # High-Performance Similarity Search over 20,000 Recent arXiv Abstracts
 
 **YZM 513 – High-Performance Programming for AI · Project 1**
-_Ahmet Ozan Yıldırım (269797005)_ · _GitHub: [ahmetozanyildirim/yzm513-similarity-search](https://github.com/ahmetozanyildirim/yzm513-similarity-search)_
+_Ahmet Ozan Yıldırım (269797005) · Mazhar Selvitopi (269797013)_ · _GitHub: [ahmetozanyildirim/yzm513-similarity-search](https://github.com/ahmetozanyildirim/yzm513-similarity-search)_
 
 > **Summary.** The task: return the top-10 most similar abstracts, by cosine similarity, for each of 200 queries over 20,000
 > arXiv abstracts embedded in 768 dimensions. The pure-Python baseline takes **154.4 s**. The final engine takes
@@ -532,8 +532,9 @@ class SearchEngine:                       # src/hpss/search.py (abridged)
 **Code:** `SearchEngine` in [`src/hpss/search.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py) ([L53–133](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py#L53-L133)); the parallel top-k `topk_rows` and the in-place re-rank `candidate_scores` in [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) ([L137–181](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L137-L181)).
 
 **Pipeline:** data → embedding (offline) → normalise → TruncatedSVD to 128-d → batched BLAS search → parallel top-100 →
-exact 768-d re-rank → top-10. The re-rank is what makes the result exact: the reduced space only *proposes* candidates, and
-the final scores are true 768-d cosines.
+exact 768-d re-rank → top-10. Re-ranking computes exact 768-d scores for the selected candidates; it cannot recover
+true neighbours excluded from the candidate pool. The pipeline is therefore approximate. The 100% recall below is an
+observation on these 200 queries, not an exactness guarantee for unseen queries.
 
 How many candidates are needed (200 x 20K)?
 
@@ -770,3 +771,49 @@ SVD-128 + re-rank(100) + parallel top-k engine needs 3.67 ms.*
 | Move | Nothing: shared memory; the corpus is read in place (no pickling). | 3.1 KB of query out, 120 B of (id, score) back per shard. |
 | Wait | One barrier at the end of `prange`; the batch of 200 queries takes 3.89 ms. | The slowest shard, then a merge of shards x k results (a tree merge when the fan-in is large). |
 | Fail | A crash restarts the query (milliseconds, nothing to save). | Retry the shard task. It is read-only and pure, so running it twice is safe (measured: 30% failed attempts, still exact). |
+
+<div class="pagebreak"></div>
+
+### F. Joint validation and new measurements on a second machine
+
+We ran an additional comparison on the same 20,000 abstracts under Linux ARM64. This run uses TF-IDF with 4,096
+features, TruncatedSVD to 128 dimensions, and float64. We use the first 50 stored titles as queries and fit the
+transformers on abstracts only. This representation differs from the main experiment's 768-d MPNet embeddings.
+Speedups therefore compare identical vectors on this machine only; the Windows timings are not a hardware baseline.
+
+**Environment and method.** Linux aarch64, 4 cores, 23.4 GiB RAM, Python 3.14.4, NumPy 2.5.4, Numba 0.68.0 and OpenBLAS.
+We measure eight implementations at 1K, 5K, 10K and 20K documents: 32 configurations. Each has 3 warmup calls followed
+by 5 timed iterations, or 160 timed measurements in total. Preparation and SVD fitting are excluded from search time.
+The thread pool is created before timing; Python list conversion is also excluded. The Numba matrix implementations
+recompute norms inside the search; BLAS and the fused kernels use prepared unit vectors. This compares complete
+implemented search paths, not the compiler in isolation.
+
+| 50 queries × 20,000 documents × 128 dimensions | Median search (ms) | Speedup over same-machine baseline |
+|---|---:|---:|
+| Pure Python | 20,071.953 | 1.00× |
+| NumPy BLAS, 1 thread | 27.430 | 731.76× |
+| NumPy BLAS, 4 threads | 15.343 | 1,308.21× |
+| Numba serial cosine matrix + selection | 100.737 | 199.25× |
+| Numba parallel cosine matrix + selection | 46.196 | 434.50× |
+| Fused Numba, 1 thread | 35.772 | 561.11× |
+| Fused Numba, 4 threads | 18.057 | 1,111.60× |
+| ThreadPool, 4 workers; 1 BLAS thread per worker | 9.856 | 2,036.55× |
+
+All 32 comparisons match the baseline's top-10 document IDs exactly. The largest absolute score difference is below
+1.56e-15, versus a tolerance of 1e-5. ThreadPool wins at 20K in this run; the Windows/MPNet ranking does not necessarily
+transfer to another machine and representation.
+
+The five raw timings, mean, standard deviation, data/code SHA-256 fingerprints and package versions are in
+`results/validation_arm64/tfidf_svd_50q/summary.json`; see `timings.csv` for tables and `scaling.png` for all sizes.
+Reproduce with:
+
+```bash
+OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 NUMBA_NUM_THREADS=4 \
+python scripts/validate_independent.py --output results/validation_arm64/new_run
+```
+
+**Correctness fixes.** Regression tests cover wrong document IDs accepted through copied scores, zero-vector division
+and invalid k bounds. We added a subspace-residual stopping criterion and a small Rayleigh–Ritz SVD finalization to our
+power iteration, testing orthogonality for rank-deficient matrices and close singular values. The Windows measurements
+in §3.2 belong to the previous power-iteration version, not this corrected version. Run tests with
+`python -m pytest tests -q`.

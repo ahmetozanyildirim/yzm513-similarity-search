@@ -20,8 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT_DIR = ROOT / "report"
 
 CSS = """
-@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 10pt; line-height: 1.33; color: #1a1a1a; }
+@page { size: A4; margin: 14mm 15mm 14mm 15mm; }
+body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 9.5pt; line-height: 1.28; color: #1a1a1a; }
 h1 { font-size: 17pt; margin: 0 0 4pt; }
 h2 { font-size: 13pt; margin: 14pt 0 5pt; border-bottom: 1px solid #ccc; padding-bottom: 2pt; break-after: avoid; }
 h3 { font-size: 11pt; margin: 10pt 0 4pt; break-after: avoid; }
@@ -31,7 +31,7 @@ ul, ol { margin: 3pt 0; padding-left: 16pt; }
 table { border-collapse: collapse; margin: 5pt 0; font-size: 8.6pt; break-inside: avoid; }
 th, td { border: 1px solid #c8c8c8; padding: 2pt 5pt; vertical-align: top; }
 th { background: #f0f0f0; }
-img { max-width: 100%; display: block; margin: 6pt auto 2pt; break-inside: avoid; }
+img { max-width: 90%; display: block; margin: 6pt auto 2pt; break-inside: avoid; }
 p:has(> img) { break-inside: avoid; break-after: avoid; }
 em { color: #333; }
 code { font-family: Consolas, "Courier New", monospace; font-size: 8.6pt; background: #f4f4f4; padding: 0 2px; }

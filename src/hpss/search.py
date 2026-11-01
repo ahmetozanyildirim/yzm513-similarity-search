@@ -8,8 +8,9 @@ Pipeline of `SearchEngine`:
     query --> normalise --> [reduced] candidate search (BLAS matmul + argpartition)
           --> exact re-rank of the candidates in full 768-d --> top-k
 
-The exact re-rank is what lets the reduced-dimension engine still return the
-*same* scores as the naive baseline (tolerance 1e-5).
+The exact re-rank computes baseline-compatible scores for the selected candidates
+(tolerance 1e-5). Candidate selection remains approximate: a true neighbour not
+selected in reduced space cannot be recovered by re-ranking.
 """
 
 from __future__ import annotations
@@ -28,6 +29,11 @@ def topk_from_scores(S, k):
     are then sorted. A full argsort would be O(n log n).
     """
     S = np.atleast_2d(S)
+    if (S.ndim != 2 or not S.shape[0] or not S.shape[1]
+            or not np.isfinite(S).all()):
+        raise ValueError("top-k scores must be a non-empty finite 2D matrix")
+    if isinstance(k, (bool, np.bool_)) or not isinstance(k, (int, np.integer)) or not 1 <= k <= S.shape[1]:
+        raise ValueError("k must be an integer between 1 and the document count")
     part = np.argpartition(-S, k - 1, axis=1)[:, :k]
     part_scores = np.take_along_axis(S, part, axis=1)
     order = np.argsort(-part_scores, axis=1, kind="stable")
@@ -96,6 +102,10 @@ class SearchEngine:
         """Return (idx, scores) - both (n_queries x k), scores are exact cosines.
         Pass a dict as `timings` to get the time of every stage (profiling)."""
         from .kernels import candidate_scores, topk_rows
+        if not hasattr(self, "X"):
+            raise ValueError("fit the search engine before searching")
+        if isinstance(k, (bool, np.bool_)) or not isinstance(k, (int, np.integer)) or not 1 <= k <= self.n_docs:
+            raise ValueError("k must be an integer between 1 and the document count")
         clock = time.perf_counter
         t0 = clock()
         Qn = np.ascontiguousarray(normalize_rows(np.atleast_2d(np.asarray(Q, dtype=self.dtype))))

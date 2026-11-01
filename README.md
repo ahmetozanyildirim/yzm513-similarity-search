@@ -10,6 +10,9 @@ baseline with tolerance 1e-5.
 * Report: [`report/REPORT.md`](report/REPORT.md) (PDF: `report/REPORT.pdf`) · Turkish: [`report/RAPOR.md`](report/RAPOR.md) (PDF: `report/RAPOR.pdf`)
 * All figures and raw benchmark data: [`results/`](results/) (one folder per project phase)
 
+The joint report is authored by Ahmet Ozan Yıldırım and Mazhar Selvitopi. Its Appendix F includes the new ARM64
+measurements: 32 comparisons using a 128-d TF-IDF/SVD representation, kept separate from Windows/MPNet speedups.
+
 | | |
 |---|---|
 | Dataset | arXiv API, 20,000 abstracts (documents) + 200 paper titles (queries); the matching abstract is the known answer |
@@ -89,3 +92,17 @@ CPython 3.14t (PEP 703). Install it with `uv python install 3.14t` (or point `HP
 * `import hpss` sets `OMP_WAIT_POLICY=PASSIVE` / `KMP_BLOCKTIME=0` so that idle Numba (OpenMP) threads sleep instead of spinning
   and stealing cores from OpenBLAS (measured in phase 4; set `HPSS_NO_THREAD_FIX=1` to disable).
 * Close other CPU-heavy programs while benchmarking.
+
+## Run the additional validation
+
+```bash
+python -m pytest tests -q
+OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 NUMBA_NUM_THREADS=4 \
+python scripts/validate_independent.py --output results/validation_arm64/new_run
+```
+
+The runner uses the committed JSONL text, downloads no embedding model, and never overwrites previous results.
+Every configuration gets 3 warmups and 5 timed iterations. Choose a fresh output directory for each run.
+`summary.json` records raw timings, correctness and SHA-256 fingerprints. To reproduce the main MPNet experiments
+from the existing text instead of downloading/resampling the corpus, use `python scripts/prepare_data.py --from-processed`;
+this generates the embeddings.

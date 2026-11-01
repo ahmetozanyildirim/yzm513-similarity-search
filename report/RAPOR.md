@@ -1,7 +1,7 @@
 # 20.000 Güncel arXiv Özeti Üzerinde Yüksek Başarımlı Benzerlik Araması
 
 **YZM 513 – Yapay Zekâ için Yüksek Başarımlı Programlama · Proje 1**
-_Ahmet Ozan Yıldırım (269797005)_ · _GitHub: [ahmetozanyildirim/yzm513-similarity-search](https://github.com/ahmetozanyildirim/yzm513-similarity-search)_
+_Ahmet Ozan Yıldırım (269797005) · Mazhar Selvitopi (269797013)_ · _GitHub: [ahmetozanyildirim/yzm513-similarity-search](https://github.com/ahmetozanyildirim/yzm513-similarity-search)_
 
 > **Özet.** Görev: 768 boyutta gömülmüş 20.000 arXiv özeti üzerinde, 200 sorgunun her biri için kosinüs benzerliğine göre en
 > benzer 10 özeti döndürmek. Saf Python baseline **154,4 s** sürüyor. Son motor **3,89 ms (39.689x daha hızlı)**, tek bir
@@ -533,8 +533,9 @@ class SearchEngine:                       # src/hpss/search.py (abridged)
 **Kod:** [`src/hpss/search.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py) içinde `SearchEngine` ([L53–133](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/search.py#L53-L133)); paralel top-k `topk_rows` ve yerinde re-rank `candidate_scores`, [`src/hpss/kernels.py`](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py) içinde ([L137–181](https://github.com/ahmetozanyildirim/yzm513-similarity-search/blob/master/src/hpss/kernels.py#L137-L181)).
 
 **Hat:** veri → embedding (çevrimdışı) → normalize → TruncatedSVD ile 128-d → batch'li BLAS araması → paralel top-100 →
-kesin 768-d re-rank → top-10. Sonucu kesin yapan re-rank: indirgenmiş uzay yalnızca aday *öneriyor*, nihai skorlar gerçek
-768-d kosinüsler.
+kesin 768-d re-rank → top-10. Re-rank, seçilen adayların skorlarını tam 768-d uzayda hesaplıyor; aday havuzuna
+alınmayan gerçek komşuları geri getirmiyor. Dolayısıyla bu hat yaklaşık aramadır. Aşağıdaki %100 recall sonucu ölçülen
+200 sorguya aittir; görülmemiş sorgular için kesinlik garantisi değildir.
 
 Kaç aday gerekiyor (200 x 20K)?
 
@@ -770,3 +771,50 @@ re-rank(100) + paralel top-k motoru 3,67 ms sürüyor.*
 | Taşı (Move) | Hiçbir şey: paylaşımlı bellek; corpus yerinde okunuyor (pickle yok). | Shard başına 3,1 KB sorgu gidiyor, 120 B (id, skor) dönüyor. |
 | Bekle (Wait) | `prange` sonunda tek bir bariyer; 200 sorguluk batch 3,89 ms sürüyor. | En yavaş shard, ardından shard x k sonucun birleştirilmesi (fan-in büyükse ağaç birleştirme). |
 | Arıza (Fail) | Bir çökme sorguyu yeniden başlatır (milisaniyeler, kaydedilecek bir şey yok). | Shard görevini yeniden dene. Salt-okunur ve saf olduğu için iki kez çalıştırmak güvenli (ölçüldü: %30 başarısız deneme, sonuç yine kesin). |
+
+<div class="pagebreak"></div>
+
+### F. İkinci makinede ortak doğrulama ve yeni ölçümler
+
+Ana deneylere ek olarak, aynı 20.000 özet üzerinde Linux ARM64 ortamında bir karşılaştırma daha yaptık. Bu koşuda
+4.096 özellikli TF-IDF matrisini TruncatedSVD ile 128 boyuta indirdik ve float64 kullandık. İlk 50 kayıtlı başlığı sorgu
+olarak aldık; dönüştürücüleri yalnızca özetlerde eğittik. Bu temsil, ana deneylerdeki 768-d MPNet embedding'lerinden
+farklıdır. Dolayısıyla burada yalnızca aynı makine ve aynı vektörler içindeki hızlanmaları hesaplıyoruz; Windows
+tablolarıyla doğrudan donanım karşılaştırması yapmıyoruz.
+
+**Ortam ve yöntem.** Linux aarch64, 4 çekirdek, 23,4 GiB RAM, Python 3.14.4, NumPy 2.5.4, Numba 0.68.0 ve OpenBLAS.
+1K, 5K, 10K ve 20K dokümanda sekiz uygulamayı ölçtük: toplam 32 yapılandırma. Her yapılandırma için 3 ısınma çağrısı
+ve ardından 5 zamanlı tekrar kullandık; toplam 160 zamanlı ölçüm var. Hazırlık ve SVD eğitimi arama süresinin dışında.
+ThreadPool havuzunu ölçümden önce kurduk; seri baseline için liste dönüşümünü de dışarıda yaptık. Numba matris
+sürümleri normları arama içinde tekrar hesaplıyor; BLAS ve birleşik kernel hazır birim vektörleri kullanıyor.
+Bu tablo yalnız derleyici etkisini değil, uygulamaların bütün arama yollarını karşılaştırıyor.
+
+| 50 sorgu × 20.000 doküman × 128 boyut | Medyan arama (ms) | Aynı ortamda baseline'a göre hızlanma |
+|---|---:|---:|
+| Saf Python | 20.071,953 | 1,00× |
+| NumPy BLAS, 1 thread | 27,430 | 731,76× |
+| NumPy BLAS, 4 thread | 15,343 | 1.308,21× |
+| Numba seri kosinüs matrisi + seçim | 100,737 | 199,25× |
+| Numba paralel kosinüs matrisi + seçim | 46,196 | 434,50× |
+| Birleşik Numba, 1 thread | 35,772 | 561,11× |
+| Birleşik Numba, 4 thread | 18,057 | 1.111,60× |
+| ThreadPool, 4 worker; worker başına 1 BLAS thread | 9,856 | 2.036,55× |
+
+32 karşılaştırmanın tümünde top-10 belge kimlikleri baseline ile birebir eşleşti. En büyük mutlak skor farkı
+1,56e-15'in altında kaldı; tolerans 1e-5. Bu koşuda 20K dokümanda en hızlı yöntem ThreadPool oldu. Bu sonuç,
+Windows/MPNet deneyindeki sıralamanın her donanım ve temsile taşınamayacağını gösteriyor.
+
+Ham beşli süreler, ortalama, standart sapma, veri/kod SHA-256 özetleri ve ortam sürümleri
+`results/validation_arm64/tfidf_svd_50q/summary.json` içinde; tablolar `timings.csv`, bütün boyutların eğrisi
+`scaling.png` içinde. Tekrar çalıştırma komutu:
+
+```bash
+OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 NUMBA_NUM_THREADS=4 \
+python scripts/validate_independent.py --output results/validation_arm64/new_run
+```
+
+**Doğruluk düzeltmeleri.** Belge kimliği yanlışken yalnız skor eşitliğiyle başarılı sayılan kontrolleri, sıfır vektörde
+bölmeyi ve geçersiz k sınırlarını regresyon testleriyle düzelttik. Power iteration SVD'ye altuzay artığına dayalı
+durdurma ve küçük bir Rayleigh–Ritz SVD sonlandırması ekledik; rank eksikliği ve yakın tekil değerlerde ortogonalliği
+test ettik. §3.2'deki Windows ölçümleri önceki power-iteration sürümüne aittir; bu düzeltmenin yeni süreleri olarak
+sunulmuyor. Güncel test komutu `python -m pytest tests -q`.

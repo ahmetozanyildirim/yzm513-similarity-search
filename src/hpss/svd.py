@@ -27,31 +27,48 @@ def power_iteration_svd(X, k, max_iter=100, tol=1e-6, seed=0, return_history=Fal
 
         V <- qr( X^T (X V) )          # never forms X^T X explicitly
 
-    Convergence: stop when the singular-value estimates sigma_i = ||X v_i||
-    change by less than `tol` (relative) between two iterations.
-    Returns U (m x k), S (k,), Vt (k x n)  [+ history of the relative change].
+    Convergence: stop when the relative invariant-subspace residual is below
+    `tol`. A small k-by-k Rayleigh-Ritz SVD finalizes orthogonal triplets;
+    singular-value estimates alone do not establish convergence.
+    Returns U (m x k), S (k,), Vt (k x n) [+ relative subspace residual history].
     """
+    X = np.asarray(X)
+    if X.ndim != 2 or not X.size or not np.isfinite(X).all():
+        raise ValueError("SVD input must be a non-empty finite matrix")
     m, n = X.shape
+    if isinstance(k, (bool, np.bool_)) or not isinstance(k, (int, np.integer)) or not 1 <= k <= min(m, n):
+        raise ValueError("k must be between 1 and min(matrix.shape)")
+    if max_iter < 1 or tol <= 0 or not np.isfinite(tol):
+        raise ValueError("max_iter and tolerance must be positive")
+    X = X.astype(np.result_type(X.dtype, np.float64), copy=False)
     rng = np.random.default_rng(seed)
     V, _ = np.linalg.qr(rng.standard_normal((n, k)).astype(X.dtype))
-    s_old = np.zeros(k)
     history = []
+    converged = False
     for it in range(max_iter):
         XV = X @ V                                   # m x k
-        s_new = np.linalg.norm(XV, axis=0)           # current singular value estimates
-        change = float(np.max(np.abs(s_new - s_old) / np.maximum(s_new, 1e-30)))
-        history.append(change)
-        if change < tol:
+        product = X.T @ XV
+        residual = product - V @ (V.T @ product)
+        relative = float(np.linalg.norm(residual) / max(np.linalg.norm(product), 1e-30))
+        history.append(relative)
+        if relative < tol:
+            converged = True
             break
-        s_old = s_new
-        V, _ = np.linalg.qr(X.T @ XV)                # n x k, orthonormal columns
+        V, _ = np.linalg.qr(product)                # n x k, orthonormal columns
     XV = X @ V
-    S = np.linalg.norm(XV, axis=0)
-    U = XV / S
-    order = np.argsort(-S)
-    U, S, Vt = U[:, order], S[order], V[:, order].T
+    if not converged:
+        # At max_iter the last QR has already updated V: report this returned
+        # subspace, not the pre-update residual checked inside the loop.
+        product = X.T @ XV
+        residual = product - V @ (V.T @ product)
+        history[-1] = float(np.linalg.norm(residual) / max(np.linalg.norm(product), 1e-30))
+        converged = history[-1] < tol
+    left_basis, core = np.linalg.qr(XV, mode="reduced")
+    core_u, S, core_vt = np.linalg.svd(core, full_matrices=False)
+    U, Vt = left_basis @ core_u, core_vt @ V.T
     if return_history:
-        return U, S, Vt, {"iterations": it + 1, "history": history}
+        return U, S, Vt, {"iterations": it + 1, "history": history,
+                          "converged": converged, "subspace_residual": history[-1]}
     return U, S, Vt
 
 
@@ -67,6 +84,8 @@ def reduce(X, k, method="truncated_svd", seed=0, max_iter=100, tol=1e-6):
                                           return_history=True)
         Z, comps, mean = U * S, Vt, None
         info["iterations"] = h["iterations"]
+        info["converged"] = h["converged"]
+        info["subspace_residual"] = h["subspace_residual"]
     elif method == "numpy_svd":
         U, S, Vt = np.linalg.svd(X, full_matrices=False)       # full SVD, then truncate
         Z, comps, mean = U[:, :k] * S[:k], Vt[:k], None

@@ -38,14 +38,15 @@ def cosine_matrix_python(Q, X):
             s = 0.0
             for t in range(d):
                 s += q[t] * x[t]
-            S[i][j] = s / (qn[i] * xn[j])
+            S[i][j] = s / (qn[i] * xn[j]) if qn[i] > 0 and xn[j] > 0 else 0.0
     return np.array(S)
 
 
 # 2 --------------------------------------------------------------------
 def cosine_matrix_numpy(Q, X):
-    Qn = Q / np.linalg.norm(Q, axis=1, keepdims=True)
-    Xn = X / np.linalg.norm(X, axis=1, keepdims=True)
+    from .data import normalize_rows
+    Qn = normalize_rows(Q)
+    Xn = normalize_rows(X)
     return Qn @ Xn.T
 
 
@@ -72,7 +73,7 @@ def cosine_matrix_numba(Q, X):
             s = 0.0
             for t in range(d):
                 s += Q[i, t] * X[j, t]
-            S[i, j] = s / (qn[i] * xn[j])
+            S[i, j] = s / (qn[i] * xn[j]) if qn[i] > 0 and xn[j] > 0 else 0.0
     return S
 
 
@@ -99,7 +100,7 @@ def cosine_matrix_numba_parallel(Q, X):
             s = 0.0
             for t in range(d):
                 s += Q[i, t] * X[j, t]
-            S[i, j] = s / (qn[i] * xn[j])
+            S[i, j] = s / (qn[i] * xn[j]) if qn[i] > 0 and xn[j] > 0 else 0.0
     return S
 
 
@@ -126,7 +127,7 @@ def cosine_matrix_numba_fastmath(Q, X):
             s = 0.0
             for t in range(d):
                 s += Q[i, t] * X[j, t]
-            S[i, j] = s / (qn[i] * xn[j])
+            S[i, j] = s / (qn[i] * xn[j]) if qn[i] > 0 and xn[j] > 0 else 0.0
     return S
 
 
@@ -143,6 +144,8 @@ def topk_rows(S, k):
     fraction that limits the speed-up (Amdahl).
     """
     nq, n = S.shape
+    if k < 1 or k > n:
+        raise ValueError("k must be between 1 and the document count")
     out_idx = np.empty((nq, k), dtype=np.int64)
     out_val = np.empty((nq, k), dtype=np.float64)
     for i in prange(nq):
@@ -194,6 +197,8 @@ def search_numba_fused(Qn, Xn, k):
     """
     nq, d = Qn.shape
     n = Xn.shape[0]
+    if k < 1 or k > n:
+        raise ValueError("k must be between 1 and the document count")
     out_idx = np.empty((nq, k), dtype=np.int64)
     out_val = np.empty((nq, k), dtype=np.float64)
     for i in prange(nq):

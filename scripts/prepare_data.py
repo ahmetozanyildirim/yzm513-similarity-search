@@ -19,17 +19,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--skip-download", action="store_true")
     ap.add_argument("--skip-embed", action="store_true")
+    ap.add_argument("--from-processed", action="store_true",
+                    help="Reuse the committed corpus/queries without fetching or rebuilding raw data")
     args = ap.parse_args()
 
-    if not args.skip_download:
-        data.fetch_arxiv()
-
-    raw = data.load_raw()
-    corpus, report = data.prepare_corpus(raw)
-    queries = data.make_queries(corpus)
-    data.save_jsonl(corpus, config.CORPUS_JSONL)
-    data.save_jsonl(queries, config.QUERIES_JSONL)
-    bench.update_summary("0_data", preprocessing=report)
+    if args.from_processed:
+        for path in (config.CORPUS_JSONL, config.QUERIES_JSONL):
+            if not path.is_file():
+                ap.error(f"processed input missing: {path}")
+        corpus, queries = data.load_corpus(), data.load_queries()
+        if corpus.empty or queries.empty:
+            ap.error("processed corpus and queries must be non-empty")
+        report = {"prepared_docs": len(corpus), "prepared_queries": len(queries),
+                  "source": "existing processed JSONL; no raw download or resampling"}
+        bench.update_summary("0_data", preparation_reuse=report)
+    else:
+        if not args.skip_download:
+            data.fetch_arxiv()
+        raw = data.load_raw()
+        corpus, report = data.prepare_corpus(raw)
+        queries = data.make_queries(corpus)
+        data.save_jsonl(corpus, config.CORPUS_JSONL)
+        data.save_jsonl(queries, config.QUERIES_JSONL)
+        bench.update_summary("0_data", preprocessing=report)
     print("preprocessing:", report)
 
     if not args.skip_embed:
