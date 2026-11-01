@@ -11,6 +11,3 @@ data/processed/*.npy
 
 # Dask / Ray scratch
 dask-worker-space/
-
-# rapor: son hali hazır olunca yüklenecek (o zaman bu satırı sil)
-report/
